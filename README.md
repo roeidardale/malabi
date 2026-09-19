@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Malabi
 
-## Getting Started
+A local, functional rebuild of [malabi-expres.co.il](https://www.malabi-expres.co.il/) (authorized by the site owner) — a storefront + admin panel for a delivery business in Ashkelon, Israel. Local-only, not deployed.
 
-First, run the development server:
+## Stack
+
+- **Framework**: Next.js 16.3.5 (App Router, Turbopack), TypeScript, React 19
+- **Database**: SQLite via Prisma 6.19.3
+- **Auth**: `iron-session` cookies (separate customer and admin sessions), `bcryptjs` password hashing
+- **Styling**: Tailwind v4, RTL Hebrew layout, dark theme
+- **Payments**: pluggable provider (`src/lib/payment/`) — mock provider (auto-approve, default) and a Tranzila provider (built, unconfigured)
+
+## Getting started
 
 ```bash
+npm install
+cp .env.example .env      # then fill in SESSION_SECRET etc.
+npx prisma migrate dev
+npm run dev-seed           # optional: seed sample data
+npm run create-admin       # create the first admin user
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App runs at `http://localhost:3000`. Admin panel is at `/admin`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the dev server |
+| `npm run build` / `npm run start` | Production build/serve |
+| `npm run lint` | ESLint |
+| `npm run create-admin` | Interactive CLI to create an admin user |
+| `npm run dev-seed` | Seed local dev data |
+| `npm run scrape` | Crawl the live site's public pages to (re)populate categories/products |
 
-## Learn More
+## Project structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/app/(storefront)/   customer-facing site: browsing, cart, checkout
+src/app/admin/          admin panel (categories, products, orders), gated by src/proxy.ts
+src/app/api/            route handlers (e.g. payment callback)
+src/app/login/          register/          customer auth
+src/lib/                money, session, payment provider helpers
+src/server/actions/     server actions (auth, cart, checkout, admin products)
+prisma/                 schema + migrations (SQLite)
+scripts/                create-admin, dev-seed, scrape
+docs/                   project status, TODO, and upgrade notes
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Status
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See [`docs/STATUS.md`](docs/STATUS.md) for what's built and how, and [`docs/TODO.md`](docs/TODO.md) for what's left (real prices, Tranzila payment setup, delivery fees, etc.).
