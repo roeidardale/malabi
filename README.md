@@ -5,7 +5,7 @@ A local, functional rebuild of [malabi-expres.co.il](https://www.malabi-expres.c
 ## Stack
 
 - **Framework**: Next.js 16.3.5 (App Router, Turbopack), TypeScript, React 19
-- **Database**: SQLite via Prisma 6.19.3
+- **Database**: PostgreSQL via Prisma 6.19.3
 - **Auth**: `iron-session` cookies (separate customer and admin sessions), `bcryptjs` password hashing
 - **Styling**: Tailwind v4, RTL Hebrew layout, dark theme
 - **Payments**: pluggable provider (`src/lib/payment/`) — mock provider (auto-approve, default) and a Tranzila provider (built, unconfigured)
@@ -15,6 +15,7 @@ A local, functional rebuild of [malabi-expres.co.il](https://www.malabi-expres.c
 ```bash
 npm install
 cp .env.example .env      # then fill in SESSION_SECRET etc.
+docker compose up -d       # start local Postgres
 npx prisma migrate dev
 npm run dev-seed           # optional: seed sample data
 npm run create-admin       # create the first admin user
@@ -43,7 +44,7 @@ src/app/api/            route handlers (e.g. payment callback)
 src/app/login/          register/          customer auth
 src/lib/                money, session, payment provider helpers
 src/server/actions/     server actions (auth, cart, checkout, admin products)
-prisma/                 schema + migrations (SQLite)
+prisma/                 schema + migrations (PostgreSQL)
 scripts/                create-admin, dev-seed, scrape
 docs/                   project status, TODO, and upgrade notes
 ```
