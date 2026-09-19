@@ -1,7 +1,11 @@
+import { Truck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { formatIls } from "@/lib/money";
-import { Button } from "@/components/ui/Button";
-import { Select } from "@/components/ui/Input";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Select } from "@/components/ui/input";
 import { requireAdmin } from "@/server/actions/admin-guard";
 import { assignOrderToDriver, unassignOrder } from "@/server/actions/admin-dispatch";
 import { OrderStatusBadge, PaymentStatusBadge } from "@/components/admin/StatusBadge";
@@ -28,34 +32,29 @@ export default async function DispatchPage({
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">שיבוץ משלוחים</h1>
+      <h1 className="mb-6 text-display-md">שיבוץ משלוחים</h1>
 
       {error ? (
-        <p className="mb-4 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
+        <ErrorBanner className="mb-4">{error}</ErrorBanner>
       ) : null}
 
       {orders.length === 0 ? (
-        <p className="text-muted">אין הזמנות פתוחות לשיבוץ כרגע</p>
+        <EmptyState icon={Truck} title="אין הזמנות פתוחות לשיבוץ כרגע" />
       ) : (
         <div className="flex flex-col gap-3">
           {orders.map((order) => (
-            <div
-              key={order.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4"
-            >
+            <Card key={order.id} className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="font-semibold">
                   #{order.orderNumber} — {order.customerName}
                 </p>
-                <p className="text-sm text-muted">
+                <p className="text-sm text-muted-foreground">
                   {order.deliveryStreet}, {order.deliveryCity}
                 </p>
                 <div className="mt-2 flex items-center gap-2">
                   <OrderStatusBadge status={order.status} />
                   <PaymentStatusBadge status={order.paymentStatus} />
-                  <span className="text-sm text-muted">{formatIls(order.totalAgorot)}</span>
+                  <span className="text-sm text-muted-foreground">{formatIls(order.totalAgorot)}</span>
                 </div>
               </div>
 
@@ -92,7 +91,7 @@ export default async function DispatchPage({
                   </form>
                 )}
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

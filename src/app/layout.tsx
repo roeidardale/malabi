@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Heebo } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@/components/ui/toast";
 
 const heebo = Heebo({
   variable: "--font-heebo",
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html dir="rtl" lang="he" className={`${heebo.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         {children}
+        <Toaster />
       </body>
     </html>
   );

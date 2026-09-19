@@ -1,6 +1,10 @@
+import { PackageCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { formatIls } from "@/lib/money";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdmin } from "@/server/actions/admin-guard";
 import { updateOrderStatus } from "@/server/actions/admin-orders";
 import { OrderStatusBadge, PaymentStatusBadge } from "@/components/admin/StatusBadge";
@@ -23,20 +27,18 @@ export default async function MyDeliveriesPage({
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">המשלוחים שלי</h1>
+      <h1 className="mb-6 text-display-md">המשלוחים שלי</h1>
 
       {error ? (
-        <p className="mb-4 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
+        <ErrorBanner className="mb-4">{error}</ErrorBanner>
       ) : null}
 
       {orders.length === 0 ? (
-        <p className="text-muted">אין משלוחים משויכים אליך כרגע</p>
+        <EmptyState icon={PackageCheck} title="אין משלוחים משויכים אליך כרגע" />
       ) : (
         <div className="flex flex-col gap-3">
           {orders.map((order) => (
-            <div key={order.id} className="rounded-lg border border-border bg-surface p-4">
+            <Card key={order.id}>
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <p className="text-lg font-bold">#{order.orderNumber}</p>
                 <OrderStatusBadge status={order.status} />
@@ -44,12 +46,12 @@ export default async function MyDeliveriesPage({
               </div>
 
               <p className="font-medium">{order.customerName}</p>
-              <p className="text-sm text-muted">{order.customerPhone}</p>
+              <p className="text-sm text-muted-foreground">{order.customerPhone}</p>
               <p className="mt-1 text-sm">
                 {order.deliveryStreet}, {order.deliveryCity}
               </p>
               {order.deliveryNotes ? (
-                <p className="mt-1 text-sm text-muted">הערות: {order.deliveryNotes}</p>
+                <p className="mt-1 text-sm text-muted-foreground">הערות: {order.deliveryNotes}</p>
               ) : null}
               <p className="mt-2 font-semibold text-accent">{formatIls(order.totalAgorot)}</p>
 
@@ -61,7 +63,7 @@ export default async function MyDeliveriesPage({
                   </Button>
                 </form>
               ) : null}
-            </div>
+            </Card>
           ))}
         </div>
       )}

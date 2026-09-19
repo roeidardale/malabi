@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { registerCustomer } from "@/server/actions/auth";
-import { Button } from "@/components/ui/Button";
-import { Input, Label } from "@/components/ui/Input";
+import { Button } from "@/components/ui/button";
+import { Input, Label } from "@/components/ui/input";
 
 export function RegisterForm() {
   const [state, formAction, pending] = useActionState(registerCustomer, undefined);
@@ -56,7 +56,7 @@ export function RegisterForm() {
         {pending ? "נרשם..." : "הרשמה"}
       </Button>
 
-      <p className="text-center text-sm text-muted">
+      <p className="text-center text-sm text-muted-foreground">
         כבר יש לך חשבון?{" "}
         <Link href="/login" className="text-accent hover:underline">
           התחברות

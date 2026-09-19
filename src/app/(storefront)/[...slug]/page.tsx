@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PackageOpen } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getBreadcrumbs, getCategoryByPath } from "@/lib/categoryTree";
 import { ProductCard } from "@/components/storefront/ProductCard";
 import { VariantSelector } from "@/components/storefront/VariantSelector";
 import { CartPageContent } from "@/components/storefront/CartPageContent";
+import { Card } from "@/components/ui/card";
+import { ImageTile } from "@/components/ui/image-tile";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const CART_PATH = "סל-קניות";
 
@@ -18,7 +22,7 @@ function Breadcrumbs({
   trailingLabel?: string;
 }) {
   return (
-    <nav className="flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="breadcrumbs">
+    <nav className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground" aria-label="breadcrumbs">
       <Link href="/" className="hover:text-accent">
         בית
       </Link>
@@ -68,31 +72,28 @@ export default async function CategoryOrProductPage({
       <div className="flex flex-col gap-8">
         <Breadcrumbs items={breadcrumbs} />
 
-        <h1 className="text-2xl font-bold">{category.name}</h1>
+        <h1 className="text-display-md">{category.name}</h1>
 
         {category.children.length > 0 && (
           <section>
-            <h2 className="mb-4 text-lg font-semibold">תתי קטגוריות</h2>
+            <h2 className="mb-4 text-heading">תתי קטגוריות</h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
               {category.children.map((child) => (
-                <Link
-                  key={child.id}
-                  href={`/${category.fullSlugPath}/${child.slug}`}
-                  className="group flex flex-col items-center gap-3 rounded-lg border border-border bg-surface p-4 text-center transition-colors hover:border-accent"
-                >
-                  <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-md bg-surface-deep">
-                    {child.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={child.imageUrl}
-                        alt={child.name}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-xs text-muted">אין תמונה</span>
-                    )}
-                  </div>
-                  <span className="font-medium group-hover:text-accent">{child.name}</span>
+                <Link key={child.id} href={`/${category.fullSlugPath}/${child.slug}`}>
+                  <Card
+                    interactive
+                    className="group flex flex-col items-center gap-3 text-center"
+                  >
+                    <ImageTile
+                      src={child.imageUrl}
+                      alt={child.name}
+                      className="w-24"
+                      sizes="96px"
+                    />
+                    <span className="font-medium group-hover:text-accent">
+                      {child.name}
+                    </span>
+                  </Card>
                 </Link>
               ))}
             </div>
@@ -101,17 +102,21 @@ export default async function CategoryOrProductPage({
 
         {category.products.length > 0 && (
           <section>
-            <h2 className="mb-4 text-lg font-semibold">מוצרים</h2>
+            <h2 className="mb-4 text-heading">מוצרים</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {category.products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+              {category.products.map((product, index) => (
+                <ProductCard key={product.id} product={product} priority={index < 3} />
               ))}
             </div>
           </section>
         )}
 
         {category.children.length === 0 && category.products.length === 0 && (
-          <p className="text-muted">אין מוצרים בקטגוריה זו כרגע.</p>
+          <EmptyState
+            icon={PackageOpen}
+            title="אין מוצרים בקטגוריה זו כרגע"
+            description="נסו קטגוריה אחרת או חזרו לבדוק בקרוב."
+          />
         )}
       </div>
     );
@@ -141,26 +146,23 @@ export default async function CategoryOrProductPage({
             <Breadcrumbs items={breadcrumbs} trailingLabel={product.name} />
 
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-              <div className="flex h-80 items-center justify-center overflow-hidden rounded-lg bg-surface-deep">
-                {product.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={product.imageUrl}
-                    alt={product.name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span className="text-muted">אין תמונה</span>
-                )}
-              </div>
+              <ImageTile
+                src={product.imageUrl}
+                alt={product.name}
+                aspect="4/3"
+                sizes="(min-width: 768px) 45vw, 90vw"
+                priority
+              />
 
               <div className="flex flex-col gap-4">
-                <h1 className="text-2xl font-bold">{product.name}</h1>
+                <h1 className="text-display-md">{product.name}</h1>
 
                 {product.descriptionLong ? (
-                  <p className="whitespace-pre-line text-muted">{product.descriptionLong}</p>
+                  <p className="whitespace-pre-line text-body text-muted-foreground">
+                    {product.descriptionLong}
+                  </p>
                 ) : product.descriptionShort ? (
-                  <p className="text-muted">{product.descriptionShort}</p>
+                  <p className="text-body text-muted-foreground">{product.descriptionShort}</p>
                 ) : null}
 
                 <div className="max-w-xs">
@@ -183,7 +185,7 @@ export default async function CategoryOrProductPage({
       return (
         <article className="mx-auto flex max-w-2xl flex-col gap-6">
           <Breadcrumbs items={[]} trailingLabel={staticPage.title} />
-          <h1 className="text-2xl font-bold">{staticPage.title}</h1>
+          <h1 className="text-display-md">{staticPage.title}</h1>
           <div
             className="prose prose-invert max-w-none text-foreground"
             dangerouslySetInnerHTML={{ __html: staticPage.bodyHtml }}

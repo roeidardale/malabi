@@ -2,8 +2,8 @@
 
 import { useActionState } from "react";
 import { updateCustomerProfile } from "@/server/actions/auth";
-import { Button } from "@/components/ui/Button";
-import { Input, Label } from "@/components/ui/Input";
+import { Button } from "@/components/ui/button";
+import { Input, Label } from "@/components/ui/input";
 
 interface ProfileFormProps {
   customer: {

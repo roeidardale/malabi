@@ -3,8 +3,8 @@
 import { useState } from "react";
 import type { ProductVariant } from "@prisma/client";
 import { formatIls } from "@/lib/money";
-import { Button } from "@/components/ui/Button";
-import { Select } from "@/components/ui/Input";
+import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/input";
 import { addToCart } from "@/server/actions/cart";
 
 export function VariantSelector({ variants }: { variants: ProductVariant[] }) {
@@ -13,7 +13,7 @@ export function VariantSelector({ variants }: { variants: ProductVariant[] }) {
   const selectedVariant = variants.find((variant) => variant.id === selectedId) ?? null;
 
   if (variants.length === 0) {
-    return <p className="text-sm text-muted">אין אפשרויות זמינות כרגע</p>;
+    return <p className="text-sm text-muted-foreground">אין אפשרויות זמינות כרגע</p>;
   }
 
   return (

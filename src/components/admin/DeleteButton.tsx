@@ -1,6 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
+import { useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export function DeleteButton({
   label = "מחיקה",
@@ -9,17 +11,22 @@ export function DeleteButton({
   label?: string;
   confirmMessage?: string;
 }) {
+  const anchorRef = useRef<HTMLSpanElement>(null);
+
   return (
-    <Button
-      type="submit"
-      variant="danger"
-      onClick={(event) => {
-        if (!window.confirm(confirmMessage)) {
-          event.preventDefault();
+    <span ref={anchorRef} className="inline-block">
+      <ConfirmDialog
+        trigger={
+          <Button type="button" variant="danger">
+            {label}
+          </Button>
         }
-      }}
-    >
-      {label}
-    </Button>
+        title="אישור מחיקה"
+        description={confirmMessage}
+        confirmLabel="מחיקה"
+        variant="danger"
+        onConfirm={() => anchorRef.current?.closest("form")?.requestSubmit()}
+      />
+    </span>
   );
 }

@@ -1,6 +1,8 @@
 import type { Category, Product } from "@prisma/client";
-import { Button } from "@/components/ui/Button";
-import { Input, Label, Select, Textarea } from "@/components/ui/Input";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { Input, Label, Select, Textarea } from "@/components/ui/input";
+import { FormField } from "@/components/ui/form-field";
+import { ImageTile } from "@/components/ui/image-tile";
 
 export function ProductForm({
   action,
@@ -14,28 +16,17 @@ export function ProductForm({
   includeImage?: boolean;
 }) {
   return (
-    <form
-      action={action}
-      className="flex max-w-xl flex-col gap-4"
-    >
-      <div>
-        <Label htmlFor="name">שם</Label>
-        <Input id="name" name="name" defaultValue={product?.name} required />
-      </div>
+    <form action={action} className="flex max-w-xl flex-col gap-4">
+      <FormField id="name" label="שם">
+        <Input name="name" defaultValue={product?.name} required />
+      </FormField>
 
-      <div>
-        <Label htmlFor="slug">סלאג</Label>
-        <Input id="slug" name="slug" defaultValue={product?.slug} required />
-      </div>
+      <FormField id="slug" label="סלאג">
+        <Input name="slug" defaultValue={product?.slug} required />
+      </FormField>
 
-      <div>
-        <Label htmlFor="categoryId">קטגוריה</Label>
-        <Select
-          id="categoryId"
-          name="categoryId"
-          defaultValue={product?.categoryId ?? ""}
-          required
-        >
+      <FormField id="categoryId" label="קטגוריה">
+        <Select name="categoryId" defaultValue={product?.categoryId ?? ""} required>
           <option value="" disabled>
             בחר קטגוריה
           </option>
@@ -45,46 +36,29 @@ export function ProductForm({
             </option>
           ))}
         </Select>
-      </div>
+      </FormField>
 
-      <div>
-        <Label htmlFor="descriptionShort">תיאור קצר</Label>
-        <Input
-          id="descriptionShort"
-          name="descriptionShort"
-          defaultValue={product?.descriptionShort ?? ""}
-        />
-      </div>
+      <FormField id="descriptionShort" label="תיאור קצר">
+        <Input name="descriptionShort" defaultValue={product?.descriptionShort ?? ""} />
+      </FormField>
 
-      <div>
-        <Label htmlFor="descriptionLong">תיאור מלא</Label>
-        <Textarea
-          id="descriptionLong"
-          name="descriptionLong"
-          rows={5}
-          defaultValue={product?.descriptionLong ?? ""}
-        />
-      </div>
+      <FormField id="descriptionLong" label="תיאור מלא">
+        <Textarea name="descriptionLong" rows={5} defaultValue={product?.descriptionLong ?? ""} />
+      </FormField>
 
-      <div>
-        <Label htmlFor="sortOrder">סדר מיון</Label>
-        <Input
-          id="sortOrder"
-          name="sortOrder"
-          type="number"
-          defaultValue={product?.sortOrder ?? 0}
-        />
-      </div>
+      <FormField id="sortOrder" label="סדר מיון">
+        <Input name="sortOrder" type="number" defaultValue={product?.sortOrder ?? 0} />
+      </FormField>
 
       {includeImage ? (
-        <div>
+        <div className="flex flex-col gap-2">
           <Label htmlFor="image">תמונת מוצר</Label>
           {product?.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <ImageTile
               src={product.imageUrl}
               alt={product.name}
-              className="mb-2 h-24 w-24 rounded-md border border-border object-cover"
+              className="w-24"
+              sizes="96px"
             />
           ) : null}
           <input
@@ -92,7 +66,7 @@ export function ProductForm({
             name="image"
             type="file"
             accept="image/*"
-            className="block w-full text-sm text-muted file:me-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-2 file:text-black"
+            className="block w-full text-sm text-muted-foreground file:me-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-2 file:text-accent-foreground"
           />
         </div>
       ) : null}
@@ -105,14 +79,14 @@ export function ProductForm({
           defaultChecked={product?.isActive ?? true}
           className="h-4 w-4"
         />
-        <Label htmlFor="isActive" className="mb-0">
+        <label htmlFor="isActive" className="text-sm text-muted-foreground">
           פעיל
-        </Label>
+        </label>
       </div>
 
-      <Button type="submit" variant="primary" className="mt-2 self-start">
+      <SubmitButton pendingLabel="שומר..." className="mt-2 self-start">
         שמירה
-      </Button>
+      </SubmitButton>
     </form>
   );
 }

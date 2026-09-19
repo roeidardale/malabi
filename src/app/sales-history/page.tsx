@@ -28,14 +28,14 @@ export default async function SalesHistoryPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 p-4 py-10">
-      <Link href="/customer-profile" className="text-sm text-muted hover:text-accent">
+      <Link href="/customer-profile" className="text-sm text-muted-foreground hover:text-accent">
         → האזור האישי
       </Link>
 
-      <h1 className="text-2xl font-bold">היסטוריית הזמנות</h1>
+      <h1 className="text-display-md">היסטוריית הזמנות</h1>
 
       {orders.length === 0 ? (
-        <div className="rounded-lg border border-border bg-surface p-6 text-center text-muted">
+        <div className="rounded-lg border border-border bg-surface p-6 text-center text-muted-foreground">
           עדיין לא ביצעת הזמנות
         </div>
       ) : (
@@ -44,7 +44,7 @@ export default async function SalesHistoryPage() {
             <li key={order.id} className="rounded-lg border border-border bg-surface p-4">
               <div className="flex items-center justify-between">
                 <span className="font-medium">הזמנה #{order.orderNumber}</span>
-                <span className="text-sm text-muted">
+                <span className="text-sm text-muted-foreground">
                   {new Date(order.createdAt).toLocaleDateString("he-IL")}
                 </span>
               </div>
@@ -52,7 +52,7 @@ export default async function SalesHistoryPage() {
                 <span className="text-sm text-accent">{statusLabels[order.status]}</span>
                 <span className="font-medium">{formatIls(order.totalAgorot)}</span>
               </div>
-              <ul className="mt-3 flex flex-col gap-1 border-t border-border pt-3 text-sm text-muted">
+              <ul className="mt-3 flex flex-col gap-1 border-t border-border pt-3 text-sm text-muted-foreground">
                 {order.items.map((item) => (
                   <li key={item.id} className="flex items-center justify-between">
                     <span>

@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatIls } from "@/lib/money";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING_PAYMENT: "ממתין לתשלום",
@@ -31,29 +33,37 @@ export default async function ConfirmationPage({
   const isPaid = order.status !== "PENDING_PAYMENT" && order.status !== "CANCELLED";
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-6 text-center">
+    <div className="mx-auto flex max-w-xl flex-col items-center gap-6 text-center">
       {isPaid ? (
         <>
-          <h1 className="text-2xl font-bold text-accent">ההזמנה התקבלה בהצלחה!</h1>
-          <p className="text-muted">מספר הזמנה #{order.orderNumber}</p>
+          <CheckCircle2 className="size-14 animate-in zoom-in-50 duration-moment ease-out text-accent" />
+          <div>
+            <h1 className="text-display-md text-accent">ההזמנה התקבלה בהצלחה!</h1>
+            <p className="mt-1 text-muted-foreground">מספר הזמנה #{order.orderNumber}</p>
+          </div>
         </>
       ) : (
         <>
-          <h1 className="text-2xl font-bold text-danger">התשלום לא הושלם</h1>
-          <p className="text-muted">מספר הזמנה #{order.orderNumber} עדיין ממתין לתשלום.</p>
+          <XCircle className="size-14 text-danger" />
+          <div>
+            <h1 className="text-display-md text-danger">התשלום לא הושלם</h1>
+            <p className="mt-1 text-muted-foreground">
+              מספר הזמנה #{order.orderNumber} עדיין ממתין לתשלום.
+            </p>
+          </div>
           <Link href={`/checkout/pay/${order.id}`}>
             <Button className="mx-auto">נסה שוב לשלם</Button>
           </Link>
         </>
       )}
 
-      <div className="rounded-lg border border-border bg-surface p-4 text-start">
-        <p className="mb-2 text-sm text-muted">
+      <Card className="w-full text-start">
+        <p className="mb-2 text-sm text-muted-foreground">
           סטטוס: <span className="text-foreground">{STATUS_LABELS[order.status] ?? order.status}</span>
         </p>
         <ul className="flex flex-col gap-2 text-sm">
           {order.items.map((item) => (
-            <li key={item.id} className="flex items-center justify-between text-muted">
+            <li key={item.id} className="flex items-center justify-between text-muted-foreground">
               <span>
                 {item.productNameSnapshot} — {item.variantNameSnapshot} × {item.quantity}
               </span>
@@ -65,7 +75,7 @@ export default async function ConfirmationPage({
           <span>סה&quot;כ</span>
           <span className="text-accent">{formatIls(order.totalAgorot)}</span>
         </div>
-      </div>
+      </Card>
 
       <Link href="/" className="text-accent hover:underline">
         חזרה לחנות

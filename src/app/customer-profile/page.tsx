@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ProfileForm } from "@/components/auth/ProfileForm";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { getCustomerSession } from "@/lib/session";
 import { logoutCustomer } from "@/server/actions/auth";
@@ -22,12 +22,12 @@ export default async function CustomerProfilePage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-lg flex-col gap-6 p-4 py-10">
-      <Link href="/" className="text-sm text-muted hover:text-accent">
+      <Link href="/" className="text-sm text-muted-foreground hover:text-accent">
         → בית
       </Link>
 
       <div className="rounded-lg border border-border bg-surface p-6">
-        <h1 className="mb-6 text-2xl font-bold">האזור האישי שלי</h1>
+        <h1 className="mb-6 text-display-md">האזור האישי שלי</h1>
         <ProfileForm
           customer={{ name: customer.name, email: customer.email, phone: customer.phone }}
         />

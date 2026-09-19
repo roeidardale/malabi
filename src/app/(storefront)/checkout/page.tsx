@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCartSummary } from "@/lib/cart";
 import { formatIls } from "@/lib/money";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
+import { Card } from "@/components/ui/card";
 
 export default async function CheckoutPage() {
   const { items, subtotalAgorot, meetsMinimum } = await getCartSummary();
@@ -12,13 +13,13 @@ export default async function CheckoutPage() {
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-8">
-      <h1 className="text-2xl font-bold">פרטי משלוח ותשלום</h1>
+      <h1 className="text-display-md">פרטי משלוח ותשלום</h1>
 
-      <section className="rounded-lg border border-border bg-surface p-4">
-        <h2 className="mb-3 text-lg font-semibold">סיכום הזמנה</h2>
+      <Card>
+        <h2 className="mb-3 text-heading">סיכום הזמנה</h2>
         <ul className="flex flex-col gap-2 text-sm">
           {items.map((item) => (
-            <li key={item.id} className="flex items-center justify-between text-muted">
+            <li key={item.id} className="flex items-center justify-between text-muted-foreground">
               <span>
                 {item.productVariant.product.name} — {item.productVariant.name} × {item.quantity}
               </span>
@@ -30,7 +31,7 @@ export default async function CheckoutPage() {
           <span>סה&quot;כ</span>
           <span className="text-accent">{formatIls(subtotalAgorot)}</span>
         </div>
-      </section>
+      </Card>
 
       <CheckoutForm />
     </div>

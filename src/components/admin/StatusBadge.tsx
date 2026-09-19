@@ -1,4 +1,8 @@
 import type { OrderStatus } from "@prisma/client";
+import { Badge, type badgeVariants } from "@/components/ui/badge";
+import type { VariantProps } from "class-variance-authority";
+
+type Tone = VariantProps<typeof badgeVariants>["tone"];
 
 const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   PENDING_PAYMENT: "ממתין לתשלום",
@@ -9,22 +13,18 @@ const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   CANCELLED: "בוטל",
 };
 
-const ORDER_STATUS_CLASSES: Record<OrderStatus, string> = {
-  PENDING_PAYMENT: "bg-surface-deep text-muted",
-  PAID: "bg-accent-soft text-black",
-  PREPARING: "bg-accent-soft text-black",
-  OUT_FOR_DELIVERY: "bg-accent-soft text-black",
-  DELIVERED: "bg-emerald-500/20 text-emerald-400",
-  CANCELLED: "bg-danger/15 text-danger",
+const ORDER_STATUS_TONES: Record<OrderStatus, Tone> = {
+  PENDING_PAYMENT: "neutral",
+  PAID: "accent",
+  PREPARING: "accent",
+  OUT_FOR_DELIVERY: "accent",
+  DELIVERED: "success",
+  CANCELLED: "danger",
 };
 
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
   return (
-    <span
-      className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${ORDER_STATUS_CLASSES[status]}`}
-    >
-      {ORDER_STATUS_LABELS[status]}
-    </span>
+    <Badge tone={ORDER_STATUS_TONES[status]}>{ORDER_STATUS_LABELS[status]}</Badge>
   );
 }
 
@@ -36,15 +36,7 @@ export function PaymentStatusBadge({ status }: { status: string }) {
   const isDeclined = normalized === "DECLINED" || normalized === "FAILED";
 
   const label = isPaid ? "שולם" : isDeclined ? "התשלום נדחה" : "טרם שולם";
-  const classes = isPaid
-    ? "bg-emerald-500/20 text-emerald-400"
-    : isDeclined
-      ? "bg-danger/15 text-danger"
-      : "bg-amber-500/20 text-amber-400";
+  const tone: Tone = isPaid ? "success" : isDeclined ? "danger" : "warning";
 
-  return (
-    <span className={`inline-block rounded-full px-2 py-1 text-xs font-bold ${classes}`}>
-      {label}
-    </span>
-  );
+  return <Badge tone={tone}>{label}</Badge>;
 }

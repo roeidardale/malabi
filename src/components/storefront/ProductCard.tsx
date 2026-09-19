@@ -1,32 +1,36 @@
 import type { Product, ProductVariant } from "@prisma/client";
 import { VariantSelector } from "@/components/storefront/VariantSelector";
+import { Card } from "@/components/ui/card";
+import { ImageTile } from "@/components/ui/image-tile";
 
 type ProductWithVariants = Product & { variants: ProductVariant[] };
 
-export function ProductCard({ product }: { product: ProductWithVariants }) {
+export function ProductCard({
+  product,
+  priority = false,
+}: {
+  product: ProductWithVariants;
+  priority?: boolean;
+}) {
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4">
-      <div className="flex h-40 items-center justify-center overflow-hidden rounded-md bg-surface-deep">
-        {product.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <span className="text-sm text-muted">אין תמונה</span>
-        )}
-      </div>
+    <Card interactive className="flex flex-col gap-3">
+      <ImageTile
+        src={product.imageUrl}
+        alt={product.name}
+        sizes="(min-width: 1024px) 22vw, (min-width: 640px) 30vw, 45vw"
+        priority={priority}
+      />
 
       <div className="flex flex-col gap-1">
-        <h3 className="font-semibold">{product.name}</h3>
+        <h3 className="text-heading">{product.name}</h3>
         {product.descriptionShort && (
-          <p className="line-clamp-2 text-sm text-muted">{product.descriptionShort}</p>
+          <p className="line-clamp-2 text-small text-muted-foreground">
+            {product.descriptionShort}
+          </p>
         )}
       </div>
 
       <VariantSelector variants={product.variants} />
-    </div>
+    </Card>
   );
 }

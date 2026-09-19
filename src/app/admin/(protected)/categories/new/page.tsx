@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { createCategory } from "@/server/actions/admin-categories";
 import { CategoryForm } from "@/components/admin/CategoryForm";
 import { requireAdmin } from "@/server/actions/admin-guard";
@@ -16,12 +17,10 @@ export default async function NewCategoryPage({
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">קטגוריה חדשה</h1>
+      <h1 className="mb-6 text-display-md">קטגוריה חדשה</h1>
 
       {error ? (
-        <p className="mb-4 max-w-xl rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
+        <ErrorBanner className="mb-4 max-w-xl">{error}</ErrorBanner>
       ) : null}
 
       <CategoryForm action={createCategory} parentOptions={parentOptions} />

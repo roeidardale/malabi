@@ -1,8 +1,12 @@
 import Link from "next/link";
+import { ClipboardList } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatIls } from "@/lib/money";
 import { requireAdmin } from "@/server/actions/admin-guard";
 import { OrderStatusBadge } from "@/components/admin/StatusBadge";
+import { Card } from "@/components/ui/card";
+import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function AdminDashboardPage() {
   await requireAdmin(["OWNER"]);
@@ -31,63 +35,57 @@ export default async function AdminDashboardPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">לוח בקרה</h1>
+      <h1 className="mb-6 text-display-md">לוח בקרה</h1>
 
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {stats.map((stat) => (
-          <Link
-            key={stat.label}
-            href={stat.href}
-            className="rounded-lg border border-border bg-surface p-4 transition-colors hover:border-accent"
-          >
-            <p className="text-sm text-muted">{stat.label}</p>
-            <p className="mt-1 text-3xl font-bold text-accent">{stat.value}</p>
+          <Link key={stat.label} href={stat.href}>
+            <Card interactive>
+              <p className="text-sm text-muted-foreground">{stat.label}</p>
+              <p className="mt-1 text-3xl font-bold text-accent">{stat.value}</p>
+            </Card>
           </Link>
         ))}
       </div>
 
-      <section className="rounded-lg border border-border bg-surface p-4">
-        <h2 className="mb-4 text-lg font-semibold">הזמנות אחרונות</h2>
+      <Card>
+        <h2 className="mb-4 text-heading">הזמנות אחרונות</h2>
         {recentOrders.length === 0 ? (
-          <p className="text-muted">אין הזמנות עדיין</p>
+          <EmptyState icon={ClipboardList} title="אין הזמנות עדיין" />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-start text-sm">
-              <thead>
-                <tr className="border-b border-border text-muted">
-                  <th className="px-3 py-2 text-start">מס&apos; הזמנה</th>
-                  <th className="px-3 py-2 text-start">לקוח</th>
-                  <th className="px-3 py-2 text-start">סכום</th>
-                  <th className="px-3 py-2 text-start">סטטוס</th>
-                  <th className="px-3 py-2 text-start">תאריך</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentOrders.map((order) => (
-                  <tr key={order.id} className="border-b border-border/50">
-                    <td className="px-3 py-2">
-                      <Link
-                        href={`/admin/orders/${order.id}`}
-                        className="text-accent hover:underline"
-                      >
-                        #{order.orderNumber}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2">{order.customerName}</td>
-                    <td className="px-3 py-2">{formatIls(order.totalAgorot)}</td>
-                    <td className="px-3 py-2">
-                      <OrderStatusBadge status={order.status} />
-                    </td>
-                    <td className="px-3 py-2">
-                      {order.createdAt.toLocaleDateString("he-IL")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader>
+              <tr>
+                <th>מס&apos; הזמנה</th>
+                <th>לקוח</th>
+                <th>סכום</th>
+                <th>סטטוס</th>
+                <th>תאריך</th>
+              </tr>
+            </TableHeader>
+            <TableBody>
+              {recentOrders.map((order) => (
+                <TableRow key={order.id}>
+                  <TableCell>
+                    <Link
+                      href={`/admin/orders/${order.id}`}
+                      className="text-accent hover:underline"
+                    >
+                      #{order.orderNumber}
+                    </Link>
+                  </TableCell>
+                  <TableCell>{order.customerName}</TableCell>
+                  <TableCell>{formatIls(order.totalAgorot)}</TableCell>
+                  <TableCell>
+                    <OrderStatusBadge status={order.status} />
+                  </TableCell>
+                  <TableCell>{order.createdAt.toLocaleDateString("he-IL")}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
-      </section>
+      </Card>
     </div>
   );
 }

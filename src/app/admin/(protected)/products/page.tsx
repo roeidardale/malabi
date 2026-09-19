@@ -1,7 +1,12 @@
 import Link from "next/link";
+import { PackageSearch } from "lucide-react";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { prisma } from "@/lib/prisma";
-import { Button } from "@/components/ui/Button";
-import { Input, Select } from "@/components/ui/Input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input, Select } from "@/components/ui/input";
+import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import { EmptyState } from "@/components/ui/empty-state";
 import { deleteProduct } from "@/server/actions/admin-products";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { requireAdmin } from "@/server/actions/admin-guard";
@@ -38,27 +43,23 @@ export default async function AdminProductsPage({
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">מוצרים</h1>
+        <h1 className="text-display-md">מוצרים</h1>
         <Link href="/admin/products/new">
           <Button variant="primary">מוצר חדש</Button>
         </Link>
       </div>
 
-      {error ? (
-        <p className="mb-4 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
-      ) : null}
+      {error ? <ErrorBanner className="mb-4">{error}</ErrorBanner> : null}
 
       <form className="mb-4 flex flex-wrap items-end gap-3" method="get">
         <div>
-          <label className="mb-1 block text-sm text-muted" htmlFor="q">
+          <label className="mb-1 block text-sm text-muted-foreground" htmlFor="q">
             חיפוש לפי שם
           </label>
           <Input id="q" name="q" defaultValue={q ?? ""} placeholder="חיפוש..." />
         </div>
         <div>
-          <label className="mb-1 block text-sm text-muted" htmlFor="categoryId">
+          <label className="mb-1 block text-sm text-muted-foreground" htmlFor="categoryId">
             קטגוריה
           </label>
           <Select id="categoryId" name="categoryId" defaultValue={categoryId ?? ""}>
@@ -75,57 +76,45 @@ export default async function AdminProductsPage({
         </Button>
       </form>
 
-      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
-        <table className="w-full text-start text-sm">
-          <thead>
-            <tr className="border-b border-border text-muted">
-              <th className="px-3 py-2 text-start">שם</th>
-              <th className="px-3 py-2 text-start">קטגוריה</th>
-              <th className="px-3 py-2 text-start">פעיל</th>
-              <th className="px-3 py-2 text-start">וריאנטים</th>
-              <th className="px-3 py-2 text-start">פעולות</th>
+      {products.length === 0 ? (
+        <EmptyState icon={PackageSearch} title="לא נמצאו מוצרים" />
+      ) : (
+        <Table>
+          <TableHeader>
+            <tr>
+              <th>שם</th>
+              <th>קטגוריה</th>
+              <th>פעיל</th>
+              <th>וריאנטים</th>
+              <th>פעולות</th>
             </tr>
-          </thead>
-          <tbody>
-            {products.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-muted">
-                  לא נמצאו מוצרים
-                </td>
-              </tr>
-            ) : (
-              products.map((product) => (
-                <tr key={product.id} className="border-b border-border/50">
-                  <td className="px-3 py-2">{product.name}</td>
-                  <td className="px-3 py-2 text-muted">{product.category.name}</td>
-                  <td className="px-3 py-2">
-                    {product.isActive ? (
-                      <span className="rounded-full bg-accent-soft px-2 py-1 text-xs font-medium text-black">
-                        פעיל
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-surface-deep px-2 py-1 text-xs text-muted">
-                        לא פעיל
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2">{product._count.variants}</td>
-                  <td className="px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <Link href={`/admin/products/${product.id}`}>
-                        <Button variant="secondary">עריכה</Button>
-                      </Link>
-                      <form action={deleteProduct.bind(null, product.id)}>
-                        <DeleteButton confirmMessage="למחוק את המוצר וכל הוריאנטים שלו?" />
-                      </form>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+          </TableHeader>
+          <TableBody>
+            {products.map((product) => (
+              <TableRow key={product.id}>
+                <TableCell>{product.name}</TableCell>
+                <TableCell className="text-muted-foreground">{product.category.name}</TableCell>
+                <TableCell>
+                  <Badge tone={product.isActive ? "accent" : "neutral"}>
+                    {product.isActive ? "פעיל" : "לא פעיל"}
+                  </Badge>
+                </TableCell>
+                <TableCell>{product._count.variants}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Link href={`/admin/products/${product.id}`}>
+                      <Button variant="secondary">עריכה</Button>
+                    </Link>
+                    <form action={deleteProduct.bind(null, product.id)}>
+                      <DeleteButton confirmMessage="למחוק את המוצר וכל הוריאנטים שלו?" />
+                    </form>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }

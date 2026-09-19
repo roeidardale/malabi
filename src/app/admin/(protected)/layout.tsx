@@ -4,7 +4,8 @@ import type { AdminRole } from "@prisma/client";
 import { getAdminSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { logoutAdmin } from "@/server/actions/admin-auth";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
+import { AdminMobileNav } from "@/components/admin/AdminMobileNav";
 
 const NAV_ITEMS_BY_ROLE: Record<AdminRole, { href: string; label: string }[]> = {
   OWNER: [
@@ -44,11 +45,19 @@ export default async function AdminLayout({
   const navItems = NAV_ITEMS_BY_ROLE[admin.role];
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="flex w-60 shrink-0 flex-col border-e border-border bg-surface-deep p-4">
+    <div className="flex min-h-screen flex-col lg:flex-row">
+      <header className="flex items-center justify-between border-b border-border bg-surface-deep px-4 py-3 lg:hidden">
+        <div>
+          <p className="text-lg font-bold text-accent">מלבי אקספרס</p>
+          <p className="text-xs text-muted-foreground">ניהול</p>
+        </div>
+        <AdminMobileNav navItems={navItems} logoutAction={logoutAdmin} />
+      </header>
+
+      <aside className="hidden w-60 shrink-0 flex-col border-e border-border bg-surface-deep p-4 lg:flex">
         <div className="mb-8 px-2">
           <p className="text-lg font-bold text-accent">מלבי אקספרס</p>
-          <p className="text-xs text-muted">ניהול</p>
+          <p className="text-xs text-muted-foreground">ניהול</p>
         </div>
         <nav className="flex flex-1 flex-col gap-1">
           {navItems.map((item) => (

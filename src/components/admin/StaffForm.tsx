@@ -1,5 +1,6 @@
-import { Button } from "@/components/ui/Button";
-import { Input, Label, Select } from "@/components/ui/Input";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { Input, Select } from "@/components/ui/input";
+import { FormField } from "@/components/ui/form-field";
 
 const ROLE_OPTIONS: { value: string; label: string }[] = [
   { value: "OWNER", label: "בעלים / מנהל כללי" },
@@ -14,42 +15,31 @@ export function StaffForm({
 }) {
   return (
     <form action={action} className="flex max-w-xl flex-col gap-4">
-      <div>
-        <Label htmlFor="name">שם</Label>
-        <Input id="name" name="name" required />
-      </div>
+      <FormField id="name" label="שם">
+        <Input name="name" required />
+      </FormField>
 
-      <div>
-        <Label htmlFor="email">אימייל</Label>
-        <Input id="email" name="email" type="email" autoComplete="off" required />
-      </div>
+      <FormField id="email" label="אימייל">
+        <Input name="email" type="email" autoComplete="off" required />
+      </FormField>
 
-      <div>
-        <Label htmlFor="password">סיסמה</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          minLength={8}
-          required
-        />
-      </div>
+      <FormField id="password" label="סיסמה" hint="לפחות 8 תווים">
+        <Input name="password" type="password" autoComplete="new-password" minLength={8} required />
+      </FormField>
 
-      <div>
-        <Label htmlFor="role">תפקיד</Label>
-        <Select id="role" name="role" defaultValue="DRIVER">
+      <FormField id="role" label="תפקיד">
+        <Select name="role" defaultValue="DRIVER">
           {ROLE_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
         </Select>
-      </div>
+      </FormField>
 
-      <Button type="submit" variant="primary" className="mt-2 self-start">
+      <SubmitButton pendingLabel="יוצר..." className="mt-2 self-start">
         יצירת חשבון
-      </Button>
+      </SubmitButton>
     </form>
   );
 }

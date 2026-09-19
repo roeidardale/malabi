@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { prisma } from "@/lib/prisma";
 import { updateCategory } from "@/server/actions/admin-categories";
 import { CategoryForm } from "@/components/admin/CategoryForm";
@@ -26,13 +27,11 @@ export default async function EditCategoryPage({
 
   return (
     <div>
-      <h1 className="mb-1 text-2xl font-bold">עריכת קטגוריה</h1>
-      <p className="mb-6 text-sm text-muted">{category.fullSlugPath}</p>
+      <h1 className="mb-1 text-display-md">עריכת קטגוריה</h1>
+      <p className="mb-6 text-sm text-muted-foreground">{category.fullSlugPath}</p>
 
       {error ? (
-        <p className="mb-4 max-w-xl rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
+        <ErrorBanner className="mb-4 max-w-xl">{error}</ErrorBanner>
       ) : null}
 
       <CategoryForm

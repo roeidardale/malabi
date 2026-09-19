@@ -1,8 +1,14 @@
 import Link from "next/link";
+import { Users } from "lucide-react";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { prisma } from "@/lib/prisma";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdmin } from "@/server/actions/admin-guard";
 import { setStaffActive } from "@/server/actions/admin-staff";
+import { StaffActiveToggle } from "@/components/admin/StaffActiveToggle";
 
 const ROLE_LABELS: Record<string, string> = {
   OWNER: "בעלים / מנהל כללי",
@@ -25,62 +31,52 @@ export default async function AdminStaffPage({
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">צוות</h1>
+        <h1 className="text-display-md">צוות</h1>
         <Link href="/admin/staff/new">
           <Button variant="primary">חשבון חדש</Button>
         </Link>
       </div>
 
-      {error ? (
-        <p className="mb-4 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
-      ) : null}
+      {error ? <ErrorBanner className="mb-4">{error}</ErrorBanner> : null}
 
-      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
-        <table className="w-full text-start text-sm">
-          <thead>
-            <tr className="border-b border-border text-muted">
-              <th className="px-3 py-2 text-start">שם</th>
-              <th className="px-3 py-2 text-start">אימייל</th>
-              <th className="px-3 py-2 text-start">תפקיד</th>
-              <th className="px-3 py-2 text-start">סטטוס</th>
-              <th className="px-3 py-2 text-start">פעולות</th>
+      {staff.length === 0 ? (
+        <EmptyState icon={Users} title="אין אנשי צוות עדיין" />
+      ) : (
+        <Table>
+          <TableHeader>
+            <tr>
+              <th>שם</th>
+              <th>אימייל</th>
+              <th>תפקיד</th>
+              <th>סטטוס</th>
+              <th>פעולות</th>
             </tr>
-          </thead>
-          <tbody>
+          </TableHeader>
+          <TableBody>
             {staff.map((member) => (
-              <tr key={member.id} className="border-b border-border/50">
-                <td className="px-3 py-2">{member.name}</td>
-                <td className="px-3 py-2 text-muted">{member.email}</td>
-                <td className="px-3 py-2">{ROLE_LABELS[member.role] ?? member.role}</td>
-                <td className="px-3 py-2">
-                  {member.isActive ? (
-                    <span className="rounded-full bg-accent-soft px-2 py-1 text-xs font-medium text-black">
-                      פעיל
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-surface-deep px-2 py-1 text-xs text-muted">
-                      מושבת
-                    </span>
-                  )}
-                </td>
-                <td className="px-3 py-2">
+              <TableRow key={member.id}>
+                <TableCell>{member.name}</TableCell>
+                <TableCell className="text-muted-foreground">{member.email}</TableCell>
+                <TableCell>{ROLE_LABELS[member.role] ?? member.role}</TableCell>
+                <TableCell>
+                  <Badge tone={member.isActive ? "accent" : "neutral"}>
+                    {member.isActive ? "פעיל" : "מושבת"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
                   {member.id === currentAdminId ? (
-                    <span className="text-xs text-muted">(את/ה)</span>
+                    <span className="text-xs text-muted-foreground">(את/ה)</span>
                   ) : (
                     <form action={setStaffActive.bind(null, member.id, !member.isActive)}>
-                      <Button type="submit" variant="secondary">
-                        {member.isActive ? "השבתה" : "הפעלה"}
-                      </Button>
+                      <StaffActiveToggle isActive={member.isActive} memberName={member.name} />
                     </form>
                   )}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }

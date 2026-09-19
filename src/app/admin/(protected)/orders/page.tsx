@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { ClipboardList } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatIls } from "@/lib/money";
 import { requireAdmin } from "@/server/actions/admin-guard";
 import { OrderStatusBadge } from "@/components/admin/StatusBadge";
+import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function AdminOrdersPage() {
   await requireAdmin(["OWNER", "DELIVERY_MANAGER"]);
@@ -12,46 +15,39 @@ export default async function AdminOrdersPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">הזמנות</h1>
+      <h1 className="mb-6 text-display-md">הזמנות</h1>
 
       {orders.length === 0 ? (
-        <p className="text-muted">אין הזמנות עדיין</p>
+        <EmptyState icon={ClipboardList} title="אין הזמנות עדיין" />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
-          <table className="w-full text-start text-sm">
-            <thead>
-              <tr className="border-b border-border text-muted">
-                <th className="px-3 py-2 text-start">מס&apos; הזמנה</th>
-                <th className="px-3 py-2 text-start">לקוח</th>
-                <th className="px-3 py-2 text-start">סכום</th>
-                <th className="px-3 py-2 text-start">סטטוס</th>
-                <th className="px-3 py-2 text-start">תאריך</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => (
-                <tr key={order.id} className="border-b border-border/50">
-                  <td className="px-3 py-2">
-                    <Link
-                      href={`/admin/orders/${order.id}`}
-                      className="text-accent hover:underline"
-                    >
-                      #{order.orderNumber}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2">{order.customerName}</td>
-                  <td className="px-3 py-2">{formatIls(order.totalAgorot)}</td>
-                  <td className="px-3 py-2">
-                    <OrderStatusBadge status={order.status} />
-                  </td>
-                  <td className="px-3 py-2">
-                    {order.createdAt.toLocaleDateString("he-IL")}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <TableHeader>
+            <tr>
+              <th>מס&apos; הזמנה</th>
+              <th>לקוח</th>
+              <th>סכום</th>
+              <th>סטטוס</th>
+              <th>תאריך</th>
+            </tr>
+          </TableHeader>
+          <TableBody>
+            {orders.map((order) => (
+              <TableRow key={order.id}>
+                <TableCell>
+                  <Link href={`/admin/orders/${order.id}`} className="text-accent hover:underline">
+                    #{order.orderNumber}
+                  </Link>
+                </TableCell>
+                <TableCell>{order.customerName}</TableCell>
+                <TableCell>{formatIls(order.totalAgorot)}</TableCell>
+                <TableCell>
+                  <OrderStatusBadge status={order.status} />
+                </TableCell>
+                <TableCell>{order.createdAt.toLocaleDateString("he-IL")}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
     </div>
   );

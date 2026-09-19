@@ -1,6 +1,7 @@
 import type { Category } from "@prisma/client";
-import { Button } from "@/components/ui/Button";
-import { Input, Label, Select } from "@/components/ui/Input";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { Input, Select } from "@/components/ui/input";
+import { FormField } from "@/components/ui/form-field";
 
 export function CategoryForm({
   action,
@@ -13,19 +14,16 @@ export function CategoryForm({
 }) {
   return (
     <form action={action} className="flex max-w-xl flex-col gap-4">
-      <div>
-        <Label htmlFor="name">שם</Label>
-        <Input id="name" name="name" defaultValue={category?.name} required />
-      </div>
+      <FormField id="name" label="שם">
+        <Input name="name" defaultValue={category?.name} required />
+      </FormField>
 
-      <div>
-        <Label htmlFor="slug">סלאג</Label>
-        <Input id="slug" name="slug" defaultValue={category?.slug} required />
-      </div>
+      <FormField id="slug" label="סלאג">
+        <Input name="slug" defaultValue={category?.slug} required />
+      </FormField>
 
-      <div>
-        <Label htmlFor="parentId">קטגוריית אב</Label>
-        <Select id="parentId" name="parentId" defaultValue={category?.parentId ?? ""}>
+      <FormField id="parentId" label="קטגוריית אב">
+        <Select name="parentId" defaultValue={category?.parentId ?? ""}>
           <option value="">— ללא (קטגוריית שורש) —</option>
           {parentOptions
             .filter((option) => option.id !== category?.id)
@@ -35,22 +33,19 @@ export function CategoryForm({
               </option>
             ))}
         </Select>
-      </div>
+      </FormField>
 
-      <div>
-        <Label htmlFor="sortOrder">סדר מיון</Label>
-        <Input
-          id="sortOrder"
-          name="sortOrder"
-          type="number"
-          defaultValue={category?.sortOrder ?? 0}
-        />
-      </div>
+      <FormField id="sortOrder" label="סדר מיון">
+        <Input name="sortOrder" type="number" defaultValue={category?.sortOrder ?? 0} />
+      </FormField>
 
-      <div>
-        <Label htmlFor="imageUrl">כתובת תמונה (אופציונלי)</Label>
-        <Input id="imageUrl" name="imageUrl" defaultValue={category?.imageUrl ?? ""} />
-      </div>
+      <FormField
+        id="imageUrl"
+        label="כתובת תמונה (אופציונלי)"
+        hint="נתיב מקומי בלבד, למשל /media/categories/שם-קובץ.jpg"
+      >
+        <Input name="imageUrl" defaultValue={category?.imageUrl ?? ""} />
+      </FormField>
 
       <div className="flex items-center gap-2">
         <input
@@ -60,14 +55,14 @@ export function CategoryForm({
           defaultChecked={category?.isActive ?? true}
           className="h-4 w-4"
         />
-        <Label htmlFor="isActive" className="mb-0">
+        <label htmlFor="isActive" className="text-sm text-muted-foreground">
           פעיל
-        </Label>
+        </label>
       </div>
 
-      <Button type="submit" variant="primary" className="mt-2 self-start">
+      <SubmitButton pendingLabel="שומר..." className="mt-2 self-start">
         שמירה
-      </Button>
+      </SubmitButton>
     </form>
   );
 }

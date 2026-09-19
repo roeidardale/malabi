@@ -1,9 +1,11 @@
 import { redirect, notFound } from "next/navigation";
+import { ShieldCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatIls } from "@/lib/money";
 import { getActivePaymentProvider } from "@/lib/payment";
 import { approveMockPayment } from "@/server/actions/checkout";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 export default async function PayPage({
   params,
@@ -29,16 +31,16 @@ export default async function PayPage({
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
-      <h1 className="text-2xl font-bold">תשלום להזמנה #{order.orderNumber}</h1>
+      <h1 className="text-display-md">תשלום להזמנה #{order.orderNumber}</h1>
 
-      <div className="rounded-lg border border-border bg-surface p-4">
-        <p className="text-muted">סכום לתשלום</p>
+      <Card>
+        <p className="text-muted-foreground">סכום לתשלום</p>
         <p className="text-3xl font-bold text-accent">{formatIls(order.totalAgorot)}</p>
-      </div>
+      </Card>
 
       {payment.mode === "mock" && (
-        <div className="rounded-lg border border-border bg-surface p-6 text-center">
-          <p className="mb-4 text-muted">
+        <Card className="text-center">
+          <p className="mb-4 text-muted-foreground">
             מצב פיתוח: אין חיבור אמיתי לסליקה. לחצו לאישור תשלום מדומה כדי להשלים את ההזמנה.
           </p>
           <form action={approveMockPayment.bind(null, order.id)}>
@@ -46,17 +48,23 @@ export default async function PayPage({
               אשר תשלום (מדומה)
             </Button>
           </form>
-        </div>
+        </Card>
       )}
 
       {payment.mode === "tranzila" && payment.iframeUrl && (
-        <div className="overflow-hidden rounded-lg border border-border">
-          <iframe
-            src={payment.iframeUrl}
-            title="תשלום מאובטח"
-            className="h-[600px] w-full bg-white"
-          />
-        </div>
+        <Card className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <ShieldCheck className="size-4 text-accent" />
+            <span>תשלום מאובטח</span>
+          </div>
+          <div className="overflow-hidden rounded-md bg-white p-1">
+            <iframe
+              src={payment.iframeUrl}
+              title="תשלום מאובטח"
+              className="h-[600px] w-full rounded-sm"
+            />
+          </div>
+        </Card>
       )}
     </div>
   );

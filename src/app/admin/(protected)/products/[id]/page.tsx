@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { prisma } from "@/lib/prisma";
 import { updateProduct } from "@/server/actions/admin-products";
 import { ProductForm } from "@/components/admin/ProductForm";
@@ -30,12 +31,10 @@ export default async function EditProductPage({
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">עריכת מוצר</h1>
+      <h1 className="mb-6 text-display-md">עריכת מוצר</h1>
 
       {error ? (
-        <p className="mb-4 max-w-xl rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
+        <ErrorBanner className="mb-4 max-w-xl">{error}</ErrorBanner>
       ) : null}
 
       <ProductForm
@@ -45,7 +44,7 @@ export default async function EditProductPage({
         includeImage
       />
 
-      <h2 className="mb-3 mt-10 text-lg font-semibold">וריאנטים</h2>
+      <h2 className="mb-3 mt-10 text-heading">וריאנטים</h2>
       <VariantEditor productId={product.id} variants={product.variants} />
     </div>
   );
