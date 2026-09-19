@@ -1,0 +1,129 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import type { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import { getOrCreateCartSession } from "@/lib/cart";
+import { getCustomerSession } from "@/lib/session";
+import { MIN_ORDER_AGOROT, DELIVERY_FEE_AGOROT, DEFAULT_DELIVERY_CITY } from "@/lib/money";
+import { getActivePaymentProvider } from "@/lib/payment";
+
+export interface CheckoutActionState {
+  error?: string;
+}
+
+const checkoutSchema = z.object({
+  customerName: z.string().trim().min(1, "יש להזין שם מלא"),
+  customerPhone: z.string().trim().min(1, "יש להזין מספר טלפון"),
+  customerEmail: z.email("כתובת אימייל לא תקינה").optional().or(z.literal("")),
+  deliveryStreet: z.string().trim().min(1, "יש להזין כתובת למשלוח"),
+  deliveryCity: z.string().trim().min(1, "יש להזין עיר"),
+  deliveryNotes: z.string().trim().optional().or(z.literal("")),
+});
+
+async function nextOrderNumber(tx: Prisma.TransactionClient) {
+  const last = await tx.order.findFirst({ orderBy: { orderNumber: "desc" } });
+  return (last?.orderNumber ?? 1000) + 1;
+}
+
+export async function createOrderFromCart(
+  _prevState: CheckoutActionState | undefined,
+  formData: FormData,
+): Promise<CheckoutActionState> {
+  const parsed = checkoutSchema.safeParse({
+    customerName: formData.get("customerName"),
+    customerPhone: formData.get("customerPhone"),
+    customerEmail: formData.get("customerEmail") ?? "",
+    deliveryStreet: formData.get("deliveryStreet"),
+    deliveryCity: formData.get("deliveryCity") || DEFAULT_DELIVERY_CITY,
+    deliveryNotes: formData.get("deliveryNotes") ?? "",
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "הפרטים שהוזנו אינם תקינים" };
+  }
+
+  const cartSession = await getOrCreateCartSession();
+  if (cartSession.items.length === 0) {
+    return { error: "הסל שלך ריק" };
+  }
+
+  const subtotalAgorot = cartSession.items.reduce(
+    (sum, item) => sum + item.unitPriceAgorot * item.quantity,
+    0,
+  );
+
+  if (subtotalAgorot < MIN_ORDER_AGOROT) {
+    return { error: "לא הגעת לסכום ההזמנה המינימלי" };
+  }
+
+  const customerSession = await getCustomerSession();
+  const data = parsed.data;
+
+  const order = await prisma.$transaction(async (tx) => {
+    const orderNumber = await nextOrderNumber(tx);
+    const totalAgorot = subtotalAgorot + DELIVERY_FEE_AGOROT;
+
+    const created = await tx.order.create({
+      data: {
+        orderNumber,
+        customerId: customerSession.customerId ?? null,
+        customerName: data.customerName,
+        customerPhone: data.customerPhone,
+        customerEmail: data.customerEmail || null,
+        deliveryStreet: data.deliveryStreet,
+        deliveryCity: data.deliveryCity,
+        deliveryNotes: data.deliveryNotes || null,
+        subtotalAgorot,
+        deliveryFeeAgorot: DELIVERY_FEE_AGOROT,
+        totalAgorot,
+        items: {
+          create: cartSession.items.map((item) => ({
+            productVariantId: item.productVariantId,
+            productNameSnapshot: item.productVariant.product.name,
+            variantNameSnapshot: item.productVariant.name,
+            quantity: item.quantity,
+            unitPriceAgorot: item.unitPriceAgorot,
+            lineTotalAgorot: item.unitPriceAgorot * item.quantity,
+          })),
+        },
+      },
+      include: { items: true },
+    });
+
+    await tx.cartItem.deleteMany({ where: { cartSessionId: cartSession.id } });
+
+    return created;
+  });
+
+  const provider = getActivePaymentProvider();
+  await provider.createPayment(order);
+
+  // The cart is now empty -- refresh the shared storefront layout (cart
+  // badge) so it doesn't keep showing the pre-checkout item count across the
+  // checkout -> pay -> confirmation client-side transitions.
+  revalidatePath("/", "layout");
+
+  redirect(`/checkout/pay/${order.id}`);
+}
+
+export async function approveMockPayment(orderId: string) {
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order || order.status !== "PENDING_PAYMENT") {
+    redirect(`/checkout/confirmation/${orderId}`);
+  }
+
+  await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      status: "PAID",
+      paymentStatus: "APPROVED",
+      paymentProvider: "mock",
+      paymentTransactionId: `mock_${Date.now()}`,
+    },
+  });
+
+  redirect(`/checkout/confirmation/${orderId}`);
+}

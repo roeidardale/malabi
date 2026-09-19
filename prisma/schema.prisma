@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+}
+
+model Customer {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  name         String
+  phone        String
+  createdAt    DateTime      @default(now())
+  orders       Order[]
+  cartSessions CartSession[]
+}
+
+model Category {
+  id           String     @id @default(cuid())
+  name         String
+  slug         String
+  parentId     String?
+  parent       Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
+  children     Category[] @relation("CategoryChildren")
+  fullSlugPath String     @unique
+  sortOrder    Int        @default(0)
+  imageUrl     String?
+  isActive     Boolean    @default(true)
+  products     Product[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([parentId])
+}
+
+model Product {
+  id               String           @id @default(cuid())
+  name             String
+  slug             String
+  categoryId       String
+  category         Category         @relation(fields: [categoryId], references: [id])
+  descriptionShort String?
+  descriptionLong  String?
+  imageUrl         String?
+  sourceProductKey String?          @unique
+  sourceUrl        String?
+  isActive         Boolean          @default(true)
+  sortOrder        Int              @default(0)
+  variants         ProductVariant[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@unique([categoryId, slug])
+  @@index([categoryId])
+}
+
+model ProductVariant {
+  id                String      @id @default(cuid())
+  productId         String
+  product           Product     @relation(fields: [productId], references: [id])
+  name              String
+  priceAgorot       Int         @default(0)
+  sku               String?
+  sourceOptionValue String?
+  priceSource       String      @default("MANUAL")
+  isDefault         Boolean     @default(false)
+  isActive          Boolean     @default(true)
+  sortOrder         Int         @default(0)
+  cartItems         CartItem[]
+  orderItems        OrderItem[]
+
+  @@unique([productId, sourceOptionValue])
+  @@index([productId])
+}
+
+model CartSession {
+  id         String     @id @default(cuid())
+  token      String     @unique
+  customerId String?
+  customer   Customer?  @relation(fields: [customerId], references: [id])
+  items      CartItem[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model CartItem {
+  id               String         @id @default(cuid())
+  cartSessionId    String
+  cartSession      CartSession    @relation(fields: [cartSessionId], references: [id], onDelete: Cascade)
+  productVariantId String
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  quantity         Int
+  unitPriceAgorot  Int
+  createdAt        DateTime       @default(now())
+
+  @@unique([cartSessionId, productVariantId])
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id                   String      @id @default(cuid())
+  orderNumber          Int         @unique
+  customerId           String?
+  customer             Customer?   @relation(fields: [customerId], references: [id])
+  customerName         String
+  customerPhone        String
+  customerEmail        String?
+  deliveryStreet       String
+  deliveryCity         String      @default("אשקלון")
+  deliveryNotes        String?
+  status               OrderStatus @default(PENDING_PAYMENT)
+  subtotalAgorot       Int
+  deliveryFeeAgorot    Int         @default(0)
+  totalAgorot          Int
+  paymentProvider      String      @default("tranzila")
+  paymentTransactionId String?
+  paymentStatus        String      @default("PENDING")
+  items                OrderItem[]
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  @@index([customerId])
+}
+
+model OrderItem {
+  id                  String          @id @default(cuid())
+  orderId             String
+  order               Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productVariantId    String?
+  productVariant      ProductVariant? @relation(fields: [productVariantId], references: [id])
+  productNameSnapshot String
+  variantNameSnapshot String
+  quantity            Int
+  unitPriceAgorot     Int
+  lineTotalAgorot     Int
+}
+
+model StaticPage {
+  slug      String   @id
+  title     String
+  bodyHtml  String
+  updatedAt DateTime @updatedAt
+}
