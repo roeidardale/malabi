@@ -13,7 +13,7 @@ function errorRedirect(path: string, message: string): never {
 }
 
 export async function createCategory(formData: FormData): Promise<void> {
-  await requireAdmin();
+  await requireAdmin(["OWNER"]);
 
   const name = String(formData.get("name") ?? "").trim();
   const slug = String(formData.get("slug") ?? "").trim();
@@ -58,7 +58,7 @@ export async function createCategory(formData: FormData): Promise<void> {
 }
 
 export async function updateCategory(id: string, formData: FormData): Promise<void> {
-  await requireAdmin();
+  await requireAdmin(["OWNER"]);
 
   const current = await prisma.category.findUnique({ where: { id } });
   if (!current) {
@@ -135,13 +135,13 @@ export async function updateCategory(id: string, formData: FormData): Promise<vo
 }
 
 export async function toggleCategoryActive(id: string, nextActive: boolean): Promise<void> {
-  await requireAdmin();
+  await requireAdmin(["OWNER"]);
   await prisma.category.update({ where: { id }, data: { isActive: nextActive } });
   redirect("/admin/categories");
 }
 
 export async function deleteCategory(id: string): Promise<void> {
-  await requireAdmin();
+  await requireAdmin(["OWNER"]);
 
   const [childCount, productCount] = await Promise.all([
     prisma.category.count({ where: { parentId: id } }),

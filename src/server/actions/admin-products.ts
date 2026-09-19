@@ -17,7 +17,7 @@ function sanitizeFilename(name: string): string {
 }
 
 export async function createProduct(formData: FormData): Promise<void> {
-  await requireAdmin();
+  await requireAdmin(["OWNER"]);
 
   const name = String(formData.get("name") ?? "").trim();
   const slug = String(formData.get("slug") ?? "").trim();
@@ -57,7 +57,7 @@ export async function createProduct(formData: FormData): Promise<void> {
 }
 
 export async function updateProduct(id: string, formData: FormData): Promise<void> {
-  await requireAdmin();
+  await requireAdmin(["OWNER"]);
 
   const current = await prisma.product.findUnique({ where: { id } });
   if (!current) {
@@ -114,7 +114,7 @@ export async function updateProduct(id: string, formData: FormData): Promise<voi
 }
 
 export async function deleteProduct(id: string): Promise<void> {
-  await requireAdmin();
+  await requireAdmin(["OWNER"]);
 
   try {
     await prisma.$transaction([
@@ -133,7 +133,7 @@ export async function upsertVariant(
   variantId: string | null,
   formData: FormData
 ): Promise<void> {
-  await requireAdmin();
+  await requireAdmin(["OWNER"]);
 
   const name = String(formData.get("name") ?? "").trim();
   const priceShekels = Number(formData.get("price") ?? 0);
@@ -179,7 +179,7 @@ export async function upsertVariant(
 }
 
 export async function deleteVariant(productId: string, variantId: string): Promise<void> {
-  await requireAdmin();
+  await requireAdmin(["OWNER"]);
 
   try {
     await prisma.productVariant.delete({ where: { id: variantId } });

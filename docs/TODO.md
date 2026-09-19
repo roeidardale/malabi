@@ -7,7 +7,7 @@ Ordered roughly by what blocks real use of the site.
 - [ ] **Set real prices.** All 89 scraped variants have `priceAgorot: 0`. Two ways in, per the original plan:
   1. Export product/price data from the real Merchello admin and bulk-import it (via a script matched on `Product.sourceProductKey` / `ProductVariant.sourceOptionValue` — **`scripts/import-prices.ts` was planned but never built**; it still needs to be written).
   2. Type them in by hand via `/admin/products/[id]` — slower, but works today with no new code.
-- [ ] **Create the first admin user** — run `npm run create-admin` and follow the prompts. No `AdminUser` rows exist yet.
+- [ ] **Create the first admin user** — run `npm run create-admin` and follow the prompts. No `AdminUser` rows exist yet. This creates an `OWNER`; delivery managers and drivers are then created by the owner via `/admin/staff/new`.
 - [ ] **Re-scrape (or hand-add) the empty categories** — `אלכוהול/וודקה`, `וויסקי`, `ליקרים` came back with 0 products because the live site was serving a different page template at scrape time. Re-run `npm run scrape` later, or add these products manually via the admin panel.
 - [ ] **Resolve the duplicate-category aliasing** if the specific category structure matters to you — some branches (e.g. the "night deliveries" hub) show 0 direct products because their products are pinned to a sibling alias category instead. The data is all there; it's a question of which branch should "own" the shared products. See `docs/STATUS.md` for detail.
 
@@ -29,7 +29,15 @@ Ordered roughly by what blocks real use of the site.
 - [ ] Swap `<img>` for `next/image` across storefront/admin product images (currently plain `<img>` with `eslint-disable` comments — see `docs/UPGRADES.md`).
 - [ ] Admin products list has no pagination — fine at 430 rows, worth revisiting if the catalog grows much further.
 
+## Next phases (see the approved plan for detail)
+
+Phase 1 (roles + dispatch/driver panel) is done — see `docs/STATUS.md`. Remaining phases:
+
+- [ ] **Phase 2 — Customer phone login + saved addresses.** Replace email/password with phone+OTP, add an `Address` book, wire a pluggable SMS provider (mirrors `src/lib/payment/`). Needs an SMS vendor decision from the client.
+- [ ] **Phase 3 — Real payment activation.** Get a Tranzila terminal, verify the iframe/callback field names against current docs, confirm Apple Pay/Google Pay is enabled on the terminal, wire `DELIVERY_FEE_AGOROT` to a real value.
+- [ ] **Phase 4 — Go-live.** SQLite → Postgres, hosting choice, `scripts/import-prices.ts` (blocked on the client's price export), production env/secrets.
+
 ## Explicitly out of scope (per the approved plan)
 
 - Public deployment — this is local-only by design.
-- A full RBAC system for admin — single `AdminUser` model, no roles, is intentional.
+- A full permission-matrix RBAC system — the lightweight three-role model (`OWNER`/`DELIVERY_MANAGER`/`DRIVER`) added in Phase 1 is intentional and sufficient; no per-permission ACLs planned.

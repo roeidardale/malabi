@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { updateCategory } from "@/server/actions/admin-categories";
 import { CategoryForm } from "@/components/admin/CategoryForm";
+import { requireAdmin } from "@/server/actions/admin-guard";
 
 export default async function EditCategoryPage({
   params,
@@ -10,6 +11,7 @@ export default async function EditCategoryPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
+  await requireAdmin(["OWNER"]);
   const { id } = await params;
   const { error } = await searchParams;
 

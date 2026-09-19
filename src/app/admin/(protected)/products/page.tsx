@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/Input";
 import { deleteProduct } from "@/server/actions/admin-products";
 import { DeleteButton } from "@/components/admin/DeleteButton";
+import { requireAdmin } from "@/server/actions/admin-guard";
 import type { Prisma } from "@prisma/client";
 
 export default async function AdminProductsPage({
@@ -11,6 +12,7 @@ export default async function AdminProductsPage({
 }: {
   searchParams: Promise<{ q?: string; categoryId?: string; error?: string }>;
 }) {
+  await requireAdmin(["OWNER"]);
   const { q, categoryId, error } = await searchParams;
 
   const where: Prisma.ProductWhereInput = {};

@@ -1,15 +1,26 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import type { AdminRole } from "@prisma/client";
 import { getAdminSession } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
 import { logoutAdmin } from "@/server/actions/admin-auth";
 import { Button } from "@/components/ui/Button";
 
-const navItems = [
-  { href: "/admin", label: "לוח בקרה" },
-  { href: "/admin/categories", label: "קטגוריות" },
-  { href: "/admin/products", label: "מוצרים" },
-  { href: "/admin/orders", label: "הזמנות" },
-];
+const NAV_ITEMS_BY_ROLE: Record<AdminRole, { href: string; label: string }[]> = {
+  OWNER: [
+    { href: "/admin", label: "לוח בקרה" },
+    { href: "/admin/categories", label: "קטגוריות" },
+    { href: "/admin/products", label: "מוצרים" },
+    { href: "/admin/orders", label: "הזמנות" },
+    { href: "/admin/dispatch", label: "שיבוץ משלוחים" },
+    { href: "/admin/staff", label: "צוות" },
+  ],
+  DELIVERY_MANAGER: [
+    { href: "/admin/orders", label: "הזמנות" },
+    { href: "/admin/dispatch", label: "שיבוץ משלוחים" },
+  ],
+  DRIVER: [{ href: "/admin/my-deliveries", label: "המשלוחים שלי" }],
+};
 
 export default async function AdminLayout({
   children,
@@ -20,6 +31,17 @@ export default async function AdminLayout({
   if (!session.adminId) {
     redirect("/admin/login");
   }
+
+  const admin = await prisma.adminUser.findUnique({
+    where: { id: session.adminId },
+    select: { role: true, isActive: true },
+  });
+  if (!admin || !admin.isActive) {
+    session.destroy();
+    redirect("/admin/login");
+  }
+
+  const navItems = NAV_ITEMS_BY_ROLE[admin.role];
 
   return (
     <div className="flex min-h-screen">

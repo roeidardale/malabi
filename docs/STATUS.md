@@ -30,11 +30,17 @@ A local, functional rebuild of https://www.malabi-expres.co.il/ (authorized by t
 - Cart items from a guest session carry over automatically on login/registration
 
 ### Admin panel (`src/app/admin/`, gated by `src/proxy.ts`)
-- Login, dashboard (counts + "variants missing a price" widget)
+- Login, dashboard (counts + "variants missing a price" widget) — dashboard, categories, and products are **owner-only**
 - Categories CRUD, with cascading `fullSlugPath` updates down the tree on rename/move
 - Products + variants CRUD, including image upload
-- Orders list/detail with status updates (`PENDING_PAYMENT → PAID → PREPARING → OUT_FOR_DELIVERY → DELIVERED`/`CANCELLED`)
-- First admin user is created via `npm run create-admin` (interactive CLI) — none exists yet
+- Orders list/detail with status updates (`PENDING_PAYMENT → PAID → PREPARING → OUT_FOR_DELIVERY → DELIVERED`/`CANCELLED`) — viewable by owner and delivery manager
+- **Roles**: `AdminUser.role` (`OWNER` / `DELIVERY_MANAGER` / `DRIVER`) plus `isActive` for soft-deactivation. `requireAdmin(allowedRoles?)` (`src/server/actions/admin-guard.ts`) gates every admin Server Action and page; role-mismatches redirect to that role's own landing page (`ROLE_HOME`) instead of `/admin`, avoiding redirect loops. Nav in the protected layout is filtered per role.
+- **Dispatch** (`/admin/dispatch`, owner + delivery manager): open orders (PAID/PREPARING/OUT_FOR_DELIVERY) with payment-status badges, assign/unassign a driver (`src/server/actions/admin-dispatch.ts`)
+- **My deliveries** (`/admin/my-deliveries`, driver-only): orders assigned to the logged-in driver, payment status shown prominently on every order card (directly addresses the original "delivery guy can't tell if it's paid" problem), one-tap "mark delivered"
+- **Staff management** (`/admin/staff`, owner-only): create staff accounts with a role, activate/deactivate (`src/server/actions/admin-staff.ts`) — self-deactivation is blocked
+- **Status transition rules** (`src/lib/orderTransitions.ts`): owner is unrestricted (unchanged); delivery manager can move PAID→PREPARING→OUT_FOR_DELIVERY(+CANCELLED); drivers can only move their own assigned orders OUT_FOR_DELIVERY→DELIVERED
+- Shared `OrderStatusBadge`/`PaymentStatusBadge` components (`src/components/admin/StatusBadge.tsx`) replace what were duplicated inline status-label maps
+- First admin user is created via `npm run create-admin` (interactive CLI, creates an `OWNER`) — none exists yet; additional staff (delivery managers/drivers) are created via `/admin/staff/new` once an owner exists
 
 ## How it was built
 
@@ -55,6 +61,12 @@ All work is verified with `npx tsc --noEmit` (clean) and `npm run build` (clean,
 3. **Three categories scraped empty**: `אלכוהול/וודקה`, `וויסקי`, `ליקרים` had 0 products at scrape time — the live site was serving a different page template (a cross-sell widget) for these at that moment, not the standard catalog markup the scraper targets.
 4. Tranzila integration is built but **unconfigured and unverified** — falls back to the mock provider automatically.
 5. **Fixed during browser testing**: the header's cart badge stayed stale (showing the pre-checkout item count) through the checkout → pay → confirmation client-side transitions, because `createOrderFromCart` cleared the cart in the database but never told Next.js to refresh the shared `(storefront)` layout that renders the badge — it only caught up on a full page reload. Fixed by adding `revalidatePath("/", "layout")` right after the cart is cleared in `src/server/actions/checkout.ts`. Verified with a real browser (Playwright + a manually-located cached Chromium build, since neither the sandbox nor the Playwright plugin's expected Chrome install were available) that the badge now clears immediately.
+
+## Roles, dispatch, and staff accounts (later pass)
+
+Added `AdminRole` (`OWNER`/`DELIVERY_MANAGER`/`DRIVER`) on top of the previously flat `AdminUser` model, plus `Order.assignedDriverId`, to solve the two original known problems: no worker dashboard, and delivery staff unable to tell if an order was paid without checking a bank app. See the "Admin panel" section above for what shipped. Verified end-to-end with a real headless browser: owner sees full nav and unrestricted status changes; delivery manager is confined to orders/dispatch and blocked (redirected to their role home, not looped) from owner-only routes; a disallowed status jump (PAID→DELIVERED) is rejected with a role-specific error; a legal PAID→PREPARING→OUT_FOR_DELIVERY sequence succeeds; the assigned driver sees the order with its payment status badge, is blocked from every other admin route, and marking it DELIVERED works and removes it from their list. All test accounts/orders created for this verification were deleted afterward — `AdminUser`/`Order` counts are back to 0 admins.
+
+One thing to watch when developing locally: **the Next dev server must be restarted after any `prisma migrate dev`** (which regenerates `@prisma/client`) — a long-running dev process keeps the old generated client in memory, so new columns (e.g. `role`, `isActive`) silently read back as `undefined` instead of erroring, which is confusing to debug. This bit the first verification pass in this repo — a stale dev server from an earlier session made every login fail until it was killed and restarted.
 
 ## Manual browser verification (this pass)
 

@@ -1,17 +1,11 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatIls } from "@/lib/money";
-
-const statusLabels: Record<string, string> = {
-  PENDING_PAYMENT: "ממתין לתשלום",
-  PAID: "שולם",
-  PREPARING: "בהכנה",
-  OUT_FOR_DELIVERY: "בדרך ללקוח",
-  DELIVERED: "נמסר",
-  CANCELLED: "בוטל",
-};
+import { requireAdmin } from "@/server/actions/admin-guard";
+import { OrderStatusBadge } from "@/components/admin/StatusBadge";
 
 export default async function AdminOrdersPage() {
+  await requireAdmin(["OWNER", "DELIVERY_MANAGER"]);
   const orders = await prisma.order.findMany({
     orderBy: { createdAt: "desc" },
   });
@@ -48,7 +42,7 @@ export default async function AdminOrdersPage() {
                   <td className="px-3 py-2">{order.customerName}</td>
                   <td className="px-3 py-2">{formatIls(order.totalAgorot)}</td>
                   <td className="px-3 py-2">
-                    {statusLabels[order.status] ?? order.status}
+                    <OrderStatusBadge status={order.status} />
                   </td>
                   <td className="px-3 py-2">
                     {order.createdAt.toLocaleDateString("he-IL")}

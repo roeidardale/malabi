@@ -4,6 +4,8 @@ import { formatIls } from "@/lib/money";
 import { updateOrderStatus } from "@/server/actions/admin-orders";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Input";
+import { requireAdmin } from "@/server/actions/admin-guard";
+import { OrderStatusBadge, PaymentStatusBadge } from "@/components/admin/StatusBadge";
 
 const statusOptions: { value: string; label: string }[] = [
   { value: "PENDING_PAYMENT", label: "ממתין לתשלום" },
@@ -21,6 +23,7 @@ export default async function AdminOrderDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
+  await requireAdmin(["OWNER", "DELIVERY_MANAGER"]);
   const { id } = await params;
   const { error } = await searchParams;
 
@@ -36,7 +39,11 @@ export default async function AdminOrderDetailPage({
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">הזמנה #{order.orderNumber}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">הזמנה #{order.orderNumber}</h1>
+          <OrderStatusBadge status={order.status} />
+          <PaymentStatusBadge status={order.paymentStatus} />
+        </div>
         <span className="text-sm text-muted">
           {order.createdAt.toLocaleString("he-IL")}
         </span>

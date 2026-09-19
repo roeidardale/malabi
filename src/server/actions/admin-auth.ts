@@ -15,7 +15,7 @@ export async function loginAdmin(formData: FormData): Promise<void> {
 
   const admin = await prisma.adminUser.findUnique({ where: { email } });
 
-  if (!admin) {
+  if (!admin || !admin.isActive) {
     redirect(`/admin/login?error=${encodeURIComponent("אימייל או סיסמה שגויים")}`);
   }
 

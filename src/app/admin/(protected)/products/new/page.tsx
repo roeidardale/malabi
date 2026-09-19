@@ -1,12 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { createProduct } from "@/server/actions/admin-products";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { requireAdmin } from "@/server/actions/admin-guard";
 
 export default async function NewProductPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  await requireAdmin(["OWNER"]);
   const { error } = await searchParams;
   const categories = await prisma.category.findMany({ orderBy: { fullSlugPath: "asc" } });
 

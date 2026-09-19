@@ -1,12 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { createCategory } from "@/server/actions/admin-categories";
 import { CategoryForm } from "@/components/admin/CategoryForm";
+import { requireAdmin } from "@/server/actions/admin-guard";
 
 export default async function NewCategoryPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  await requireAdmin(["OWNER"]);
   const { error } = await searchParams;
   const parentOptions = await prisma.category.findMany({
     orderBy: { fullSlugPath: "asc" },

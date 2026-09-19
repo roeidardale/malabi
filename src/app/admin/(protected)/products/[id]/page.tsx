@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { updateProduct } from "@/server/actions/admin-products";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { VariantEditor } from "@/components/admin/VariantEditor";
+import { requireAdmin } from "@/server/actions/admin-guard";
 
 export default async function EditProductPage({
   params,
@@ -11,6 +12,7 @@ export default async function EditProductPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
+  await requireAdmin(["OWNER"]);
   const { id } = await params;
   const { error } = await searchParams;
 

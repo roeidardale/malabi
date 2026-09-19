@@ -3,12 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/Button";
 import { deleteCategory, toggleCategoryActive } from "@/server/actions/admin-categories";
 import { DeleteButton } from "@/components/admin/DeleteButton";
+import { requireAdmin } from "@/server/actions/admin-guard";
 
 export default async function AdminCategoriesPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  await requireAdmin(["OWNER"]);
   const { error } = await searchParams;
 
   const categories = await prisma.category.findMany({

@@ -7,12 +7,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum AdminRole {
+  OWNER
+  DELIVERY_MANAGER
+  DRIVER
+}
+
 model AdminUser {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  createdAt    DateTime @default(now())
+  id             String     @id @default(cuid())
+  email          String     @unique
+  passwordHash   String
+  name           String
+  role           AdminRole  @default(OWNER)
+  isActive       Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  assignedOrders Order[]    @relation("AssignedDriver")
 }
 
 model Customer {
@@ -134,11 +143,14 @@ model Order {
   paymentProvider      String      @default("tranzila")
   paymentTransactionId String?
   paymentStatus        String      @default("PENDING")
+  assignedDriverId     String?
+  assignedDriver       AdminUser?  @relation("AssignedDriver", fields: [assignedDriverId], references: [id])
   items                OrderItem[]
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
   @@index([customerId])
+  @@index([assignedDriverId])
 }
 
 model OrderItem {
