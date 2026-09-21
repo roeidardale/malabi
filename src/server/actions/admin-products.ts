@@ -1,19 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { shekelsToAgorot } from "@/lib/money";
+import { hasUpload, ImageUploadError, saveUploadedImage } from "@/server/media";
 import { requireAdmin } from "./admin-guard";
 
 function errorRedirect(redirectPath: string, message: string): never {
   redirect(`${redirectPath}?error=${encodeURIComponent(message)}`);
-}
-
-function sanitizeFilename(name: string): string {
-  const base = name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  return base || "image";
 }
 
 export async function createProduct(formData: FormData): Promise<void> {
@@ -83,13 +77,13 @@ export async function updateProduct(id: string, formData: FormData): Promise<voi
 
   let imageUrl = current!.imageUrl;
   const image = formData.get("image");
-  if (image instanceof File && image.size > 0) {
-    const dir = path.join(process.cwd(), "public", "media", "products", id);
-    await mkdir(dir, { recursive: true });
-    const filename = `${Date.now()}-${sanitizeFilename(image.name)}`;
-    const buffer = Buffer.from(await image.arrayBuffer());
-    await writeFile(path.join(dir, filename), buffer);
-    imageUrl = `/media/products/${id}/${filename}`;
+  if (hasUpload(image)) {
+    try {
+      imageUrl = await saveUploadedImage("products", id, image);
+    } catch (error) {
+      if (error instanceof ImageUploadError) errorRedirect(`/admin/products/${id}`, error.message);
+      throw error;
+    }
   }
 
   try {

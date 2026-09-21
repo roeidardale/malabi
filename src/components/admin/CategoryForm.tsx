@@ -1,7 +1,8 @@
 import type { Category } from "@prisma/client";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { Input, Select } from "@/components/ui/input";
+import { Input, Label, Select } from "@/components/ui/input";
 import { FormField } from "@/components/ui/form-field";
+import { ImageTile } from "@/components/ui/image-tile";
 
 export function CategoryForm({
   action,
@@ -39,13 +40,26 @@ export function CategoryForm({
         <Input name="sortOrder" type="number" defaultValue={category?.sortOrder ?? 0} />
       </FormField>
 
-      <FormField
-        id="imageUrl"
-        label="כתובת תמונה (אופציונלי)"
-        hint="נתיב מקומי בלבד, למשל /media/categories/שם-קובץ.jpg"
-      >
-        <Input name="imageUrl" defaultValue={category?.imageUrl ?? ""} />
-      </FormField>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="image">תמונת קטגוריה</Label>
+        {category?.imageUrl ? (
+          <ImageTile
+            src={category.imageUrl}
+            alt={category.name}
+            aspect="portrait"
+            className="w-24"
+            sizes="96px"
+          />
+        ) : null}
+        <input
+          id="image"
+          name="image"
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          className="block w-full text-sm text-muted-foreground file:me-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-2 file:text-accent-foreground"
+        />
+        <p className="text-xs text-muted-foreground">JPG, PNG, WebP או GIF, עד 5MB</p>
+      </div>
 
       <div className="flex items-center gap-2">
         <input

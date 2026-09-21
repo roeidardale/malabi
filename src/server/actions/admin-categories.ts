@@ -2,14 +2,29 @@
 
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { buildFullSlugPath } from "@/lib/categoryTree";
+import { hasUpload, ImageUploadError, saveUploadedImage } from "@/server/media";
 import { requireAdmin } from "./admin-guard";
-
-function buildFullSlugPath(parentPath: string | null, slug: string): string {
-  return parentPath ? `${parentPath}/${slug}` : slug;
-}
 
 function errorRedirect(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
+}
+
+/** Saves the optional uploaded image; returns the new path, or `fallback` when nothing was uploaded. */
+async function resolveImage(
+  formData: FormData,
+  categoryId: string,
+  fallback: string | null,
+  errorPath: string,
+): Promise<string | null> {
+  const image = formData.get("image");
+  if (!hasUpload(image)) return fallback;
+  try {
+    return await saveUploadedImage("categories", categoryId, image);
+  } catch (error) {
+    if (error instanceof ImageUploadError) errorRedirect(errorPath, error.message);
+    throw error;
+  }
 }
 
 export async function createCategory(formData: FormData): Promise<void> {
@@ -21,7 +36,6 @@ export async function createCategory(formData: FormData): Promise<void> {
   const parentId = parentIdRaw === "" ? null : parentIdRaw;
   const sortOrder = Number(formData.get("sortOrder") ?? 0) || 0;
   const isActive = formData.get("isActive") === "on";
-  const imageUrl = String(formData.get("imageUrl") ?? "").trim() || null;
 
   if (!name || !slug) {
     errorRedirect("/admin/categories/new", "שם וסלאג הם שדות חובה");
@@ -38,20 +52,18 @@ export async function createCategory(formData: FormData): Promise<void> {
 
   const fullSlugPath = buildFullSlugPath(parentPath, slug);
 
+  let category;
   try {
-    await prisma.category.create({
-      data: {
-        name,
-        slug,
-        parentId,
-        fullSlugPath,
-        sortOrder,
-        isActive,
-        imageUrl,
-      },
+    category = await prisma.category.create({
+      data: { name, slug, parentId, fullSlugPath, sortOrder, isActive },
     });
   } catch {
     errorRedirect("/admin/categories/new", "כבר קיימת קטגוריה עם סלאג/נתיב זהה");
+  }
+
+  const imageUrl = await resolveImage(formData, category.id, null, "/admin/categories/new");
+  if (imageUrl) {
+    await prisma.category.update({ where: { id: category.id }, data: { imageUrl } });
   }
 
   redirect("/admin/categories");
@@ -71,11 +83,12 @@ export async function updateCategory(id: string, formData: FormData): Promise<vo
   const parentId = parentIdRaw === "" ? null : parentIdRaw;
   const sortOrder = Number(formData.get("sortOrder") ?? 0) || 0;
   const isActive = formData.get("isActive") === "on";
-  const imageUrl = String(formData.get("imageUrl") ?? "").trim() || null;
 
   if (!name || !slug) {
     errorRedirect(`/admin/categories/${id}`, "שם וסלאג הם שדות חובה");
   }
+
+  const imageUrl = await resolveImage(formData, id, current!.imageUrl, `/admin/categories/${id}`);
 
   if (parentId === id) {
     errorRedirect(`/admin/categories/${id}`, "קטגוריה לא יכולה להיות אב של עצמה");

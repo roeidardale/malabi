@@ -12,6 +12,7 @@ const NAV_ITEMS_BY_ROLE: Record<AdminRole, { href: string; label: string }[]> = 
     { href: "/admin", label: "לוח בקרה" },
     { href: "/admin/categories", label: "קטגוריות" },
     { href: "/admin/products", label: "מוצרים" },
+    { href: "/admin/news", label: "חדשות ועדכונים" },
     { href: "/admin/orders", label: "הזמנות" },
     { href: "/admin/dispatch", label: "שיבוץ משלוחים" },
     { href: "/admin/staff", label: "צוות" },
