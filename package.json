@@ -7,11 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "e2e": "playwright test",
+    "e2e:server": "tsx --env-file=.env e2e/prepare-db.ts && NEXT_DIST_DIR=.next-e2e next dev -p 3100",
     "create-admin": "tsx --env-file=.env scripts/create-admin.ts",
     "dev-seed": "tsx --env-file=.env scripts/dev-seed.ts",
     "backfill-variants": "tsx --env-file=.env scripts/backfill-default-variants.ts",
     "dev-prices": "tsx --env-file=.env scripts/dev-placeholder-prices.ts",
     "seed-content": "tsx --env-file=.env scripts/seed-content.ts",
+    "check-media": "tsx --env-file=.env scripts/check-media.ts",
     "category-images": "tsx --env-file=.env scripts/scrape-category-images.ts",
     "scrape": "tsx --env-file=.env scripts/scrape/index.ts"
   },
@@ -34,6 +37,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",

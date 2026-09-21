@@ -10,6 +10,7 @@ Work top to bottom. `[ ]` open, `[x]` done. Items tagged **(client)** need input
 ## Phase 1 — Real catalog data  *(blocks any real use)*
 - [ ] Get price export **(client)**
 - [ ] Write `scripts/import-prices.ts` (match on `Product.sourceProductKey` / `ProductVariant.sourceOptionValue`); fallback: type prices via `/admin/products/[id]`
+- [ ] Replace dev placeholder prices (dashboard "מחירי דמו להחלפה" must reach 0; `npm run dev-prices` is DEV ONLY)
 - [ ] Verify dashboard "variants missing a price" reaches 0
 
 ## Phase 2 — Business rules
@@ -34,7 +35,8 @@ Work top to bottom. `[ ]` open, `[x]` done. Items tagged **(client)** need input
 - [ ] Rate limiting on `registerCustomer` / `loginCustomer` / `loginAdmin` (and OTP once added)
 - [ ] Input validation + upload restrictions (type/size) audit; server-action authz audit
 - [ ] Sanitize `StaticPage.bodyHtml` if editors become less trusted
-- [ ] Automated tests: unit (`money.ts`, cart subtotal/minimum), Playwright guest checkout + admin CRUD
+- [x] Playwright e2e: guest checkout, cart pricing, admin news CRUD (`npm run e2e`)
+- [ ] Unit tests (`money.ts`, cart subtotal/minimum) and e2e for the rest of admin CRUD
 - [ ] Run `npm run lint` and `npm run build` clean
 - [ ] Security review pass (`/security-review`)
 

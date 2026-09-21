@@ -58,7 +58,7 @@ export function CategoryForm({
           accept="image/jpeg,image/png,image/webp,image/gif"
           className="block w-full text-sm text-muted-foreground file:me-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-2 file:text-accent-foreground"
         />
-        <p className="text-xs text-muted-foreground">JPG, PNG, WebP או GIF, עד 5MB</p>
+        <p className="text-xs text-muted-foreground">קבצי תמונה בלבד, עד 5MB</p>
       </div>
 
       <div className="flex items-center gap-2">

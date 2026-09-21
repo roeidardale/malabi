@@ -40,9 +40,10 @@ export async function saveUploadedImage(
     throw new ImageUploadError("התמונה גדולה מדי (עד 5MB)");
   }
 
-  const dir = path.join(process.cwd(), "public", "media", kind, ownerId);
+  // Runtime-only write target: tell Turbopack not to trace public/media into the server bundle.
+  const dir = path.join(/* turbopackIgnore: true */ process.cwd(), "public", "media", kind, ownerId);
   await mkdir(dir, { recursive: true });
   const filename = `${Date.now()}.${extension}`;
-  await writeFile(path.join(dir, filename), Buffer.from(await file.arrayBuffer()));
+  await writeFile(path.join(/* turbopackIgnore: true */ dir, filename), Buffer.from(await file.arrayBuffer()));
   return `/media/${kind}/${ownerId}/${filename}`;
 }
