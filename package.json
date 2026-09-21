@@ -7,9 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "create-admin": "tsx scripts/create-admin.ts",
-    "dev-seed": "tsx scripts/dev-seed.ts",
-    "scrape": "tsx scripts/scrape/index.ts"
+    "create-admin": "tsx --env-file=.env scripts/create-admin.ts",
+    "dev-seed": "tsx --env-file=.env scripts/dev-seed.ts",
+    "scrape": "tsx --env-file=.env scripts/scrape/index.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

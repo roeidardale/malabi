@@ -46,9 +46,9 @@ src/lib/                money, session, payment provider helpers
 src/server/actions/     server actions (auth, cart, checkout, admin products)
 prisma/                 schema + migrations (PostgreSQL)
 scripts/                create-admin, dev-seed, scrape
-docs/                   project status, TODO, and upgrade notes
+docs/                   overview, features, roadmap, issues, backlog, changelog
 ```
 
 ## Status
 
-See [`docs/STATUS.md`](docs/STATUS.md) for what's built and how, and [`docs/TODO.md`](docs/TODO.md) for what's left (real prices, Tranzila payment setup, delivery fees, etc.).
+Docs live in [`docs/`](docs/README.md): start with the index, then follow [`docs/ROADMAP.md`](docs/ROADMAP.md) to production.

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PackageOpen } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { getBreadcrumbs, getCategoryByPath } from "@/lib/categoryTree";
+import { getBreadcrumbs, getCategoryByPath, getCategoryProducts } from "@/lib/categoryTree";
 import { ProductCard } from "@/components/storefront/ProductCard";
 import { VariantSelector } from "@/components/storefront/VariantSelector";
 import { CartPageContent } from "@/components/storefront/CartPageContent";
@@ -67,6 +67,7 @@ export default async function CategoryOrProductPage({
 
   if (category) {
     const breadcrumbs = await getBreadcrumbs(category);
+    const products = await getCategoryProducts(category);
 
     return (
       <div className="flex flex-col gap-8">
@@ -100,18 +101,18 @@ export default async function CategoryOrProductPage({
           </section>
         )}
 
-        {category.products.length > 0 && (
+        {products.length > 0 && (
           <section>
             <h2 className="mb-4 text-heading">מוצרים</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {category.products.map((product, index) => (
+              {products.map((product, index) => (
                 <ProductCard key={product.id} product={product} priority={index < 3} />
               ))}
             </div>
           </section>
         )}
 
-        {category.children.length === 0 && category.products.length === 0 && (
+        {category.children.length === 0 && products.length === 0 && (
           <EmptyState
             icon={PackageOpen}
             title="אין מוצרים בקטגוריה זו כרגע"

@@ -6,11 +6,13 @@
 //  - further subcategory paths linked from it (for recursive crawling)
 
 import * as cheerio from "cheerio";
-import { parseProductBlock, type ParsedProduct } from "./parseProductBlock";
+import { parseProductBlock, parseSimpleProductBlock, type ParsedProduct } from "./parseProductBlock";
 
 export interface ParsedCategoryPage {
   title: string | null;
   products: ParsedProduct[];
+  /** Size filters (`?ca=`) offered by the page; each lists a distinct product set. */
+  sizeFilters: { ca: string; label: string }[];
   subcategoryPaths: string[]; // normalized, decoded, leading+trailing slash, no origin
 }
 
@@ -33,7 +35,10 @@ function isCategoryHref(decodedPath: string): boolean {
   return CATEGORY_ROOT_PREFIXES.some((prefix) => decodedPath.startsWith(prefix));
 }
 
-export function parseCategoryPage(html: string): ParsedCategoryPage {
+export function parseCategoryPage(
+  html: string,
+  activeSize?: { ca: string; label: string },
+): ParsedCategoryPage {
   const $ = cheerio.load(html);
 
   const title = $("h1").first().text().trim() || null;
@@ -43,6 +48,21 @@ export function parseCategoryPage(html: string): ParsedCategoryPage {
     const parsed = parseProductBlock($, el);
     if (parsed) products.push(parsed);
   });
+
+  const sizeFilters: { ca: string; label: string }[] = [];
+  $('.filter-size a[href^="?ca="]').each((_i, el) => {
+    const ca = ($(el).attr("href") ?? "").slice("?ca=".length);
+    const label = $(el).text().trim().replace(/\s+/g, " ");
+    if (ca && label) sizeFilters.push({ ca, label });
+  });
+
+  // Simple-card layout: only meaningful when fetched with a size filter.
+  if (activeSize) {
+    $(".shop .product-item:not(.single)").each((_i, el) => {
+      const parsed = parseSimpleProductBlock($, el, activeSize);
+      if (parsed) products.push(parsed);
+    });
+  }
 
   const subcategoryPaths = new Set<string>();
   $("a[href]").each((_i, el) => {
@@ -67,6 +87,7 @@ export function parseCategoryPage(html: string): ParsedCategoryPage {
   return {
     title,
     products,
+    sizeFilters,
     subcategoryPaths: Array.from(subcategoryPaths),
   };
 }

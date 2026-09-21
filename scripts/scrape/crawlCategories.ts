@@ -77,7 +77,26 @@ export async function crawlCategories(seedPaths: string[]): Promise<CrawlResult>
     }
 
     const parsed = parseCategoryPage(html);
-    categories.push({ path, title: parsed.title, products: parsed.products, sourceUrl: url });
+    const products = [...parsed.products];
+    // Size-filtered categories: the unfiltered page can't be parsed reliably,
+    // so fetch each size view and collect its products.
+    const seenKeys = new Set(products.map((p) => p.sourceProductKey));
+    for (const size of parsed.sizeFilters) {
+      try {
+        const sized = parseCategoryPage(await fetchHtml(`${url}?ca=${size.ca}`), size);
+        for (const p of sized.products) {
+          if (p.sourceProductKey && seenKeys.has(p.sourceProductKey)) continue;
+          seenKeys.add(p.sourceProductKey);
+          products.push(p);
+        }
+      } catch (err) {
+        failures.push({
+          path: `${path}?ca=${size.ca}`,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+    categories.push({ path, title: parsed.title, products, sourceUrl: url });
 
     for (const sub of parsed.subcategoryPaths) {
       enqueue(sub);

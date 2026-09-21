@@ -69,3 +69,36 @@ export function parseProductBlock(
     variants,
   };
 }
+
+/**
+ * Simple card layout used by size-filtered categories (וודקה/וויסקי/ליקרים):
+ * a plain `.product-item` with an <img>, h4 name and a link to the product
+ * page. Each size filter (`?ca=`) lists distinct products, so the size label
+ * becomes the product's single variant.
+ */
+export function parseSimpleProductBlock(
+  $: CheerioAPI,
+  el: Parameters<CheerioAPI>[0],
+  size: { ca: string; label: string },
+): ParsedProduct | null {
+  const $el = $(el);
+  const baseName = $el.find(".product-desc h4").first().text().trim();
+  if (!baseName) return null;
+
+  const href = $el.find(".product-image a").first().attr("href") ?? "";
+  let slug = "";
+  try {
+    slug = decodeURIComponent(href.split("?")[0]).replace(/^\/+|\/+$/g, "");
+  } catch {
+    slug = "";
+  }
+
+  const imgSrc = $el.find(".product-image img").first().attr("src");
+  return {
+    name: `${baseName} ${size.label}`,
+    shortDescription: null,
+    imageUrl: imgSrc ? new URL(imgSrc, SITE_ORIGIN).href : null,
+    sourceProductKey: slug ? `${slug}?ca=${size.ca}` : null,
+    variants: [{ name: size.label, sourceOptionValue: size.ca }],
+  };
+}
