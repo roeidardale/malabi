@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   // The e2e suite runs its own dev server beside the normal one; a separate
   // build dir keeps the two from sharing (and locking) `.next`.
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  // Dev-only: lets other Tailscale devices (iPhone, laptops) load the dev
+  // server. Without this Next 403s their /_next/* requests, so pages render
+  // but never hydrate. Hostnames only — no scheme or port.
+  allowedDevOrigins: ["omarchy", "*.taild8a38f.ts.net", "100.69.79.32"],
   async redirects() {
     return [
       // The cart used to live at the literal Hebrew path /סל-קניות, which
