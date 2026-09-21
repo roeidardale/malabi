@@ -1,31 +1,50 @@
-import Link from "next/link";
 import { LayoutGrid } from "lucide-react";
-import { getTopLevelCategories } from "@/lib/categoryTree";
-import { formatIls, MIN_ORDER_AGOROT } from "@/lib/money";
-import { Card } from "@/components/ui/card";
-import { ImageTile } from "@/components/ui/image-tile";
+import { getStorefrontCategories } from "@/lib/categoryTree";
+import { getPublishedPosts } from "@/lib/posts";
+import { CategoryTile } from "@/components/storefront/CategoryTile";
+import { Hero } from "@/components/storefront/Hero";
+import { PostCard } from "@/components/storefront/PostCard";
 import { EmptyState } from "@/components/ui/empty-state";
+import { cn } from "@/lib/utils";
+
+const HERO_TILE_COUNT = 3;
 
 export default async function HomePage() {
-  const categories = await getTopLevelCategories();
+  const [categories, posts] = await Promise.all([getStorefrontCategories(), getPublishedPosts()]);
 
   return (
-    <div className="flex flex-col gap-8">
-      <section className="animate-in fade-in slide-in-from-bottom-4 duration-moment ease-out rounded-xl border border-border bg-surface px-6 py-10 text-center sm:px-10 sm:text-start">
-        <h1 className="text-display-md sm:text-display-lg">
-          משלוחי אלכוהול באשקלון והסביבה
-        </h1>
-        <p className="mt-3 text-body text-muted-foreground">
-          מבחר בירות, יינות ומשקאות חריפים — עד הבית, מהר.
-        </p>
-      </section>
+    <div className="flex flex-col gap-12">
+      <Hero showcase={categories.filter((c) => c.imageUrl).slice(0, HERO_TILE_COUNT)} />
 
-      <div className="rounded-lg border border-accent/40 bg-accent/10 px-4 py-3 text-sm text-accent shadow-accent">
-        מינימום הזמנה: {formatIls(MIN_ORDER_AGOROT)}
-      </div>
+      {posts.length > 0 && (
+        <section aria-labelledby="news">
+          <h2 id="news" className="mb-4 font-display text-2xl sm:text-3xl">
+            חדשות ועדכונים
+          </h2>
+          <div
+            className={cn("grid gap-4 md:grid-cols-2", posts.length > 2 && "lg:grid-cols-3")}
+          >
+            {posts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={{
+                  id: post.id,
+                  title: post.title,
+                  body: post.body,
+                  imageUrl: post.imageUrl,
+                  isPinned: post.isPinned,
+                  publishedAt: post.publishedAt.toISOString(),
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
-      <section>
-        <h2 className="mb-4 text-heading">קטגוריות</h2>
+      <section id="categories" aria-labelledby="categories-heading" className="scroll-mt-32">
+        <h2 id="categories-heading" className="mb-4 font-display text-2xl sm:text-3xl">
+          קטגוריות
+        </h2>
 
         {categories.length === 0 ? (
           <EmptyState
@@ -34,24 +53,9 @@ export default async function HomePage() {
             description="נסו לרענן את הדף בעוד כמה רגעים."
           />
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {categories.map((category) => (
-              <Link key={category.id} href={`/${category.slug}`}>
-                <Card
-                  interactive
-                  className="group flex flex-col items-center gap-3 text-center"
-                >
-                  <ImageTile
-                    src={category.imageUrl}
-                    alt={category.name}
-                    className="w-24"
-                    sizes="96px"
-                  />
-                  <span className="font-medium group-hover:text-accent">
-                    {category.name}
-                  </span>
-                </Card>
-              </Link>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4">
+            {categories.map((category, index) => (
+              <CategoryTile key={category.id} category={category} priority={index < 4} />
             ))}
           </div>
         )}

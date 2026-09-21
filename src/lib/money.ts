@@ -2,8 +2,9 @@ export function agorotToShekelString(agorot: number): string {
   return (agorot / 100).toFixed(2);
 }
 
+/** "₪65" for whole shekels, "₪65.50" otherwise. */
 export function formatIls(agorot: number): string {
-  return `₪${agorotToShekelString(agorot)}`;
+  return agorot % 100 === 0 ? `₪${agorot / 100}` : `₪${agorotToShekelString(agorot)}`;
 }
 
 export function shekelsToAgorot(shekels: number): number {

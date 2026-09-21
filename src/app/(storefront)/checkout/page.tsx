@@ -1,14 +1,15 @@
 import { redirect } from "next/navigation";
 import { getCartSummary } from "@/lib/cart";
+import { CART_PATH } from "@/lib/routes";
 import { formatIls } from "@/lib/money";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { Card } from "@/components/ui/card";
 
 export default async function CheckoutPage() {
-  const { items, subtotalAgorot, meetsMinimum } = await getCartSummary();
+  const { items, unavailableItems, subtotalAgorot, meetsMinimum } = await getCartSummary();
 
-  if (items.length === 0 || !meetsMinimum) {
-    redirect(encodeURI("/סל-קניות"));
+  if (items.length === 0 || unavailableItems.length > 0 || !meetsMinimum) {
+    redirect(CART_PATH);
   }
 
   return (

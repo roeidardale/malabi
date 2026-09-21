@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, ShoppingCart } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -13,29 +13,14 @@ import {
 } from "@/components/ui/sheet";
 
 export function MobileNav({
-  itemCount,
   isLoggedIn,
   whatsappUrl,
 }: {
-  itemCount: number;
   isLoggedIn: boolean;
   whatsappUrl: string;
 }) {
   return (
-    <div className="flex items-center gap-2 md:hidden">
-      <Link
-        href="/סל-קניות"
-        className="relative inline-flex size-10 items-center justify-center rounded-md border border-border bg-surface-deep text-foreground"
-        aria-label="סל קניות"
-      >
-        <ShoppingCart className="size-5" />
-        {itemCount > 0 && (
-          <span className="absolute -top-1 -end-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-xs font-bold text-accent-foreground">
-            {itemCount}
-          </span>
-        )}
-      </Link>
-
+    <div className="md:hidden">
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="secondary" size="icon" aria-label="תפריט">

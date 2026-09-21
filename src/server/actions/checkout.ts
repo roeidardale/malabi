@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getOrCreateCartSession } from "@/lib/cart";
+import { getOrCreateCartSession, priceCartItems } from "@/lib/cart";
 import { getCustomerSession } from "@/lib/session";
 import { MIN_ORDER_AGOROT, DELIVERY_FEE_AGOROT, DEFAULT_DELIVERY_CITY } from "@/lib/money";
 import { getActivePaymentProvider } from "@/lib/payment";
@@ -50,10 +50,10 @@ export async function createOrderFromCart(
     return { error: "הסל שלך ריק" };
   }
 
-  const subtotalAgorot = cartSession.items.reduce(
-    (sum, item) => sum + item.unitPriceAgorot * item.quantity,
-    0,
-  );
+  const { available: items, unavailable, subtotalAgorot } = priceCartItems(cartSession.items);
+  if (unavailable.length > 0) {
+    return { error: "חלק מהמוצרים בסל אינם זמינים כרגע. חזרו לסל והסירו אותם כדי להמשיך." };
+  }
 
   if (subtotalAgorot < MIN_ORDER_AGOROT) {
     return { error: "לא הגעת לסכום ההזמנה המינימלי" };
@@ -80,7 +80,7 @@ export async function createOrderFromCart(
         deliveryFeeAgorot: DELIVERY_FEE_AGOROT,
         totalAgorot,
         items: {
-          create: cartSession.items.map((item) => ({
+          create: items.map((item) => ({
             productVariantId: item.productVariantId,
             productNameSnapshot: item.productVariant.product.name,
             variantNameSnapshot: item.productVariant.name,

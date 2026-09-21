@@ -18,46 +18,42 @@ const cartInclude = {
 };
 
 /**
- * Reads the `malabi_cart_token` cookie, finds (or creates) the matching
- * CartSession row, and returns it with items -> productVariant -> product
- * included so callers can render without extra queries.
- *
- * Note: setting a cookie is only allowed while handling a Server Action or
- * Route Handler. When this is called during a plain Server Component render
- * (e.g. from the storefront layout to compute the cart badge) the cookie
- * write is a no-op wrapped in try/catch -- the session still exists in the
- * DB, and the cookie gets persisted on the next request that goes through a
- * Server Action (e.g. the first "add to cart" click).
+ * Looks up the cart for the current visitor without creating anything. Safe to
+ * call while rendering (layouts/pages), where cookies cannot be written.
  */
-export async function getOrCreateCartSession() {
+export async function findCartSession() {
   const cookieStore = await cookies();
   const token = cookieStore.get(CART_COOKIE_NAME)?.value;
+  if (!token) return null;
 
-  if (token) {
-    const existing = await prisma.cartSession.findUnique({
-      where: { token },
-      include: cartInclude,
-    });
-    if (existing) return existing;
-  }
+  return prisma.cartSession.findUnique({
+    where: { token },
+    include: cartInclude,
+  });
+}
 
-  const newToken = crypto.randomUUID();
+/**
+ * Finds the visitor's cart, or creates one and sets the cookie. Only call this
+ * from a Server Action or Route Handler: cookies are read-only during render,
+ * and creating a row there would leave an orphan session on every page view.
+ */
+export async function getOrCreateCartSession() {
+  const existing = await findCartSession();
+  if (existing) return existing;
+
+  const token = crypto.randomUUID();
   const session = await prisma.cartSession.create({
-    data: { token: newToken },
+    data: { token },
     include: cartInclude,
   });
 
-  try {
-    cookieStore.set(CART_COOKIE_NAME, newToken, {
-      httpOnly: true,
-      sameSite: "lax",
-      maxAge: CART_COOKIE_MAX_AGE,
-      path: "/",
-    });
-  } catch {
-    // Cookies can only be mutated inside a Server Action or Route Handler.
-    // Safe to ignore here; see doc comment above.
-  }
+  const cookieStore = await cookies();
+  cookieStore.set(CART_COOKIE_NAME, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    maxAge: CART_COOKIE_MAX_AGE,
+    path: "/",
+  });
 
   return session;
 }
@@ -69,8 +65,8 @@ export async function getOrCreateCartSession() {
  * session cookie in a Server Action (register/login).
  */
 export async function associateCartWithCustomer(customerId: string) {
-  const session = await getOrCreateCartSession();
-  if (session.customerId === customerId) return;
+  const session = await findCartSession();
+  if (!session || session.customerId === customerId) return;
 
   await prisma.cartSession.update({
     where: { id: session.id },
@@ -78,18 +74,44 @@ export async function associateCartWithCustomer(customerId: string) {
   });
 }
 
-export async function getCartSummary() {
-  const session = await getOrCreateCartSession();
+type PriceableItem = {
+  quantity: number;
+  unitPriceAgorot: number;
+  productVariant: { isActive: boolean; priceAgorot: number; product: { isActive: boolean } };
+};
 
-  const subtotalAgorot = session.items.reduce(
-    (sum, item) => sum + item.unitPriceAgorot * item.quantity,
-    0,
-  );
-  const itemCount = session.items.reduce((sum, item) => sum + item.quantity, 0);
+/**
+ * Prices a cart at today's catalog prices. `CartItem.unitPriceAgorot` is only
+ * the price at the moment of adding; trusting it would charge stale prices
+ * after an admin edit. Lines whose variant/product was deactivated, or that
+ * have no price, come back as `unavailable` and never count toward totals.
+ */
+export function priceCartItems<T extends PriceableItem>(items: T[]) {
+  const available: T[] = [];
+  const unavailable: T[] = [];
+
+  for (const item of items) {
+    const { productVariant } = item;
+    if (!productVariant.isActive || !productVariant.product.isActive || productVariant.priceAgorot <= 0) {
+      unavailable.push(item);
+    } else {
+      available.push({ ...item, unitPriceAgorot: productVariant.priceAgorot });
+    }
+  }
+
+  const subtotalAgorot = available.reduce((sum, item) => sum + item.unitPriceAgorot * item.quantity, 0);
+  return { available, unavailable, subtotalAgorot };
+}
+
+export async function getCartSummary() {
+  const session = await findCartSession();
+  const { available, unavailable, subtotalAgorot } = priceCartItems(session?.items ?? []);
+  const itemCount = available.reduce((sum, item) => sum + item.quantity, 0);
 
   return {
     session,
-    items: session.items,
+    items: available,
+    unavailableItems: unavailable,
     subtotalAgorot,
     itemCount,
     meetsMinimum: subtotalAgorot >= MIN_ORDER_AGOROT,

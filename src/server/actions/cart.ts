@@ -9,49 +9,56 @@ function readString(formData: FormData, key: string): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 
-export async function addToCart(formData: FormData) {
-  const variantId = readString(formData, "variantId");
-  if (!variantId) return;
+const MAX_QUANTITY_PER_ADD = 99;
 
-  const quantityRaw = Number(formData.get("quantity"));
-  const quantity = Number.isFinite(quantityRaw) && quantityRaw > 0 ? Math.floor(quantityRaw) : 1;
+export type AddToCartResult =
+  | { ok: true; itemCount: number }
+  | { ok: false; error: string };
+
+export async function addToCart(variantId: string, quantity: number): Promise<AddToCartResult> {
+  const safeQuantity = Number.isFinite(quantity)
+    ? Math.min(MAX_QUANTITY_PER_ADD, Math.max(1, Math.floor(quantity)))
+    : 1;
 
   const variant = await prisma.productVariant.findUnique({
     where: { id: variantId },
+    include: { product: { select: { isActive: true } } },
   });
-  if (!variant || !variant.isActive) return;
+  if (!variant || !variant.isActive || !variant.product.isActive) {
+    return { ok: false, error: "המוצר אינו זמין כרגע" };
+  }
+  if (variant.priceAgorot <= 0) {
+    return { ok: false, error: "אין עדיין מחיר למוצר זה" };
+  }
 
   const session = await getOrCreateCartSession();
 
-  const existing = await prisma.cartItem.findUnique({
+  await prisma.cartItem.upsert({
     where: {
       cartSessionId_productVariantId: {
         cartSessionId: session.id,
         productVariantId: variantId,
       },
     },
+    update: {
+      quantity: { increment: safeQuantity },
+      unitPriceAgorot: variant.priceAgorot,
+    },
+    create: {
+      cartSessionId: session.id,
+      productVariantId: variantId,
+      quantity: safeQuantity,
+      unitPriceAgorot: variant.priceAgorot,
+    },
   });
 
-  if (existing) {
-    await prisma.cartItem.update({
-      where: { id: existing.id },
-      data: {
-        quantity: existing.quantity + quantity,
-        unitPriceAgorot: variant.priceAgorot,
-      },
-    });
-  } else {
-    await prisma.cartItem.create({
-      data: {
-        cartSessionId: session.id,
-        productVariantId: variantId,
-        quantity,
-        unitPriceAgorot: variant.priceAgorot,
-      },
-    });
-  }
+  const { _sum } = await prisma.cartItem.aggregate({
+    where: { cartSessionId: session.id },
+    _sum: { quantity: true },
+  });
 
   revalidatePath("/", "layout");
+  return { ok: true, itemCount: _sum.quantity ?? 0 };
 }
 
 export async function updateCartItemQuantity(formData: FormData) {
