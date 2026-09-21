@@ -10,6 +10,7 @@
 //  - Variants are keyed on the unique `(productId, sourceOptionValue)`.
 
 import { PrismaClient, type Category, type Product } from "@prisma/client";
+import { DEFAULT_VARIANT_NAME, DEFAULT_VARIANT_SOURCE_VALUE } from "../lib/defaultVariant";
 import type { ParsedProduct, ParsedVariant } from "./parseProductBlock";
 
 export const prisma = new PrismaClient();
@@ -171,6 +172,15 @@ export class DbUpserter {
       where: { id: productId },
       data: { imageUrl },
     });
+  }
+
+  /** Single-item products have no size dropdown; give them one default variant. */
+  async ensureDefaultVariant(productId: string): Promise<void> {
+    await this.upsertVariant(
+      productId,
+      { name: DEFAULT_VARIANT_NAME, sourceOptionValue: DEFAULT_VARIANT_SOURCE_VALUE },
+      0,
+    );
   }
 
   async upsertVariant(productId: string, variant: ParsedVariant, index: number): Promise<void> {

@@ -106,6 +106,11 @@ async function main() {
         variantIndex++;
         variantsScraped++;
       }
+
+      if (product.variants.length === 0) {
+        await upserter.ensureDefaultVariant(row.id);
+        variantsScraped++;
+      }
     }
   }
 

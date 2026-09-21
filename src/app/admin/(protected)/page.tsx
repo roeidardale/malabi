@@ -10,17 +10,24 @@ import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function AdminDashboardPage() {
   await requireAdmin(["OWNER"]);
-  const [categoryCount, productCount, orderCount, missingPriceCount, recentOrders] =
-    await Promise.all([
-      prisma.category.count(),
-      prisma.product.count(),
-      prisma.order.count(),
-      prisma.productVariant.count({ where: { priceAgorot: 0 } }),
-      prisma.order.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 5,
-      }),
-    ]);
+  const [
+    categoryCount,
+    productCount,
+    orderCount,
+    missingPriceCount,
+    placeholderPriceCount,
+    recentOrders,
+  ] = await Promise.all([
+    prisma.category.count(),
+    prisma.product.count(),
+    prisma.order.count(),
+    prisma.productVariant.count({ where: { priceAgorot: 0 } }),
+    prisma.productVariant.count({ where: { priceSource: "PLACEHOLDER" } }),
+    prisma.order.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+  ]);
 
   const stats = [
     { label: "קטגוריות", value: categoryCount, href: "/admin/categories" },
@@ -31,13 +38,18 @@ export default async function AdminDashboardPage() {
       value: missingPriceCount,
       href: "/admin/products",
     },
+    {
+      label: "מחירי דמו להחלפה",
+      value: placeholderPriceCount,
+      href: "/admin/products",
+    },
   ];
 
   return (
     <div>
       <h1 className="mb-6 text-display-md">לוח בקרה</h1>
 
-      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {stats.map((stat) => (
           <Link key={stat.label} href={stat.href}>
             <Card interactive>
