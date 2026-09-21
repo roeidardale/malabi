@@ -1,15 +1,17 @@
 // scripts/scrape/downloadImages.ts
 //
-// Downloads a product's image (already-resolved absolute URL on the live
-// site) to public/media/products/{productId}/{filename}, and returns the
-// local public path to store on `Product.imageUrl`. Idempotent: skips the
-// network fetch if the file already exists on disk.
+// Downloads an image (already-resolved absolute URL on the live site) to
+// public/media/{products|categories}/{ownerId}/{filename}, and returns the
+// local public path to store on `imageUrl`. Idempotent: skips the network
+// fetch if the file already exists on disk.
 
 import { access, mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { fetchBuffer } from "./httpClient";
 
-const PUBLIC_MEDIA_ROOT = path.join(process.cwd(), "public", "media", "products");
+const PUBLIC_MEDIA_ROOT = path.join(process.cwd(), "public", "media");
+
+export type MediaKind = "products" | "categories";
 
 function sanitizeFilename(name: string): string {
   const cleaned = name.replace(/[/\\?%*:|"<>]/g, "_").trim();
@@ -25,8 +27,13 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
-export async function downloadProductImage(
-  productId: string,
+export function downloadProductImage(productId: string, imageUrl: string) {
+  return downloadImage("products", productId, imageUrl);
+}
+
+export async function downloadImage(
+  kind: MediaKind,
+  ownerId: string,
   imageUrl: string,
 ): Promise<string | null> {
   let url: URL;
@@ -39,9 +46,9 @@ export async function downloadProductImage(
 
   const rawBasename = decodeURIComponent(path.basename(url.pathname));
   const filename = sanitizeFilename(rawBasename);
-  const dir = path.join(PUBLIC_MEDIA_ROOT, productId);
+  const dir = path.join(PUBLIC_MEDIA_ROOT, kind, ownerId);
   const filePath = path.join(dir, filename);
-  const publicPath = `/media/products/${productId}/${filename}`;
+  const publicPath = `/media/${kind}/${ownerId}/${filename}`;
 
   if (await fileExists(filePath)) {
     return publicPath;

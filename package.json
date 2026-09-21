@@ -11,6 +11,8 @@
     "dev-seed": "tsx --env-file=.env scripts/dev-seed.ts",
     "backfill-variants": "tsx --env-file=.env scripts/backfill-default-variants.ts",
     "dev-prices": "tsx --env-file=.env scripts/dev-placeholder-prices.ts",
+    "seed-content": "tsx --env-file=.env scripts/seed-content.ts",
+    "category-images": "tsx --env-file=.env scripts/scrape-category-images.ts",
     "scrape": "tsx --env-file=.env scripts/scrape/index.ts"
   },
   "dependencies": {
