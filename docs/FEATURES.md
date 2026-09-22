@@ -17,8 +17,11 @@
 - Header: cart badge + account link; footer: static pages + WhatsApp
 
 ## Customer accounts
-- Email/password register, login, logout, profile edit, order history (`/sales-history`)
-- Guest cart attaches to customer on login/register
+- Phone + SMS OTP login (Twilio Verify) at `/login`, replacing email/password — no separate register step, one flow covers both new and returning customers
+- First-time customers are asked for their name (and optional email) exactly once, at `/onboarding`, right after their first successful code verification
+- Profile edit (name/email; phone is the fixed login identity), logout, order history with a one-click "reorder" that re-adds a past order's still-available items to the cart (`/sales-history`)
+- Saved address book (`/addresses`): multiple labeled addresses per customer, one marked default; checkout prefills the default but always offers a one-off different address for that order, with an optional "save as new address" checkbox
+- Guest cart merges into the customer's account on login: if they already have a cart from another device/session, quantities combine instead of one side being lost
 
 ## Admin panel (`/admin`)
 - Login; dashboard (counts + "variants missing price") — owner only
@@ -33,3 +36,6 @@
 
 ## Payments
 - Provider abstraction `src/lib/payment/`; mock auto-approves. Tranzila provider + callback route `src/app/api/payment/tranzila/callback/route.ts` exist but are **unconfigured/unverified**; falls back to mock when `TRANZILA_TERMINAL` is empty.
+
+## SMS (OTP login)
+- Provider abstraction `src/lib/sms/`, mirroring the payment one. `twilioVerifyProvider` is the only implementation, live-configured (`TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_VERIFY_SERVICE_SID` in `.env`) and verified end-to-end with a real phone. Twilio Verify owns code generation, delivery, expiry, and wrong-attempt lockout; this app only tracks send timestamps (`OtpRequestLog`) for its own cooldown/hourly-cap.

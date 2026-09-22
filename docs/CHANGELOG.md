@@ -2,6 +2,15 @@
 
 Newest first. Add an entry per milestone.
 
+## Phone + OTP customer login, address book, reorder (2026-09-22)
+- **Customer auth switched from email/password to phone + SMS OTP** (Twilio Verify, live-configured and verified with a real phone), replacing `src/server/actions/auth.ts` with `customer-auth.ts`. `Customer.passwordHash` dropped; `phone` is now the unique login identity, `name`/`email` are nullable and collected once at `/onboarding` after first verification.
+- **New pluggable SMS provider** `src/lib/sms/` (mirrors `src/lib/payment/`'s shape); only implementation is `twilioVerifyProvider`. `OtpRequestLog` gives OTP sends a phone-scoped cooldown (60s) and hourly cap (5), since Twilio Verify itself owns code generation/expiry/attempt-lockout.
+- **Cart merge on login fixed**: `associateCartWithCustomer` (`src/lib/cart.ts`) used to just stamp whichever guest cart cookie was present, orphaning any cart the customer already had from another device. It now merges quantities from prior sessions into the current one (or adopts a prior cart if the current device has none).
+- **Saved address book**: new `Address` model, `/addresses` page (create/edit/delete/set-default, first address auto-defaults), and checkout now prefills the logged-in customer's name/phone/email/default address while always allowing a free-text override for that one order (with an optional "save as new address" checkbox). Guest checkout is untouched.
+- **Reorder**: `/sales-history` gets a one-click "הזמן שוב" per order, re-adding still-available items to the cart via the same upsert logic as `addToCart`.
+- New `requireCustomer()` guard (`src/server/actions/customer-guard.ts`) mirroring `requireAdmin`, replacing three separate inline session checks.
+- Verified manually end-to-end (real Twilio SMS, onboarding, saved-address checkout, reorder, admin login unaffected, guest checkout unaffected) plus `npm run lint` / `npm run build` clean. Playwright coverage deferred — hitting live Twilio from e2e isn't practical (see KNOWN-ISSUES).
+
 ## Webapp fix pass (GitHub issues #1/#2, "fix all problems")
 - **Add to cart**: 403/536 products had no variant, so they couldn't be ordered; the rest needed a select before the button enabled. Now every product has a variant, the default is preselected, quantity stepper + toast feedback.
 - **Prices**: all variants were ₪0 (live site publishes none). Dev placeholders assigned and tagged `PLACEHOLDER` (`npm run dev-prices`); zero-price items can't be added; admin dashboard counts placeholders.

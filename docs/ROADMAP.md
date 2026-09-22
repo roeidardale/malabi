@@ -8,8 +8,8 @@ Work top to bottom. `[ ]` open, `[x]` done. Items tagged **(client)** need input
 - [x] Decide category alias ownership (some branches show 0 direct products — see [KNOWN-ISSUES](KNOWN-ISSUES.md))
 
 ## Phase 1 — Real catalog data  *(blocks any real use)*
-- [ ] Get price export **(client)**
-- [ ] Write `scripts/import-prices.ts` (match on `Product.sourceProductKey` / `ProductVariant.sourceOptionValue`); fallback: type prices via `/admin/products/[id]`
+- [ ] Get price export **(client)** — sent as `malabi-price-report-for-client.xlsx` for confirmation; awaiting reply
+- [x] Write `scripts/import-prices.ts` — matches CSV rows to the catalog by category/product/variant name (the price report has no `sourceProductKey`/`sourceOptionValue`); defaults to a dry run, `--apply` to write. **Not run yet** — waiting on the client's confirmed prices back; fallback: type prices via `/admin/products/[id]`
 - [ ] Replace dev placeholder prices (dashboard "מחירי דמו להחלפה" must reach 0; `npm run dev-prices` is DEV ONLY)
 - [ ] Verify dashboard "variants missing a price" reaches 0
 

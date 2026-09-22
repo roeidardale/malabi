@@ -4,11 +4,14 @@
 1. **Scraper category aliasing**: live site cross-lists products under multiple category URLs; scraper pinned each to the first seen, so some branches (e.g. "night deliveries" hub) show 0 direct products. Data complete, just under a sibling. Resolved: category pages now list descendant products (`getCategoryProducts` in `src/lib/categoryTree.ts`).
 2. **Three categories scraped empty** (`אלכוהול/וודקה`, `וויסקי`, `ליקרים`): actually a different card layout with per-size views (`?ca=5m/7m/1l`), now parsed (`parseSimpleProductBlock`). Fixed; each size is its own product with one variant, and shared items (e.g. shot syringes) repeat per size.
 3. **Tranzila unverified**: field names come from general knowledge, not a live terminal → ROADMAP Phase 4.
-4. **No rate limiting** on auth → ROADMAP Phase 5. (E2E smoke suite exists: `npm run e2e`.)
+4. **No rate limiting on `loginAdmin`**, and no IP-based/global throttling anywhere → ROADMAP Phase 5. (Customer OTP sends now have their own phone-scoped cooldown + hourly cap, see #8 below. E2E smoke suite exists: `npm run e2e`.)
 5. Admin products list has no pagination (fine at ~430 rows).
 
 6. **23 products have no photo** — the live site has none either; they show a placeholder tile.
 7. **Catalog slugs are Hebrew** (`/אלכוהול/בירות/בלאנק`). Route *folders* and redirects are ASCII (`/cart`, `/about`) because a literal Hebrew route folder was unreliable under Turbopack; dynamic slug values resolve fine.
+8. **Twilio Verify is a live, billed integration** (not mock): every `requestOtp` call costs money once trial credit runs out, and on a trial account only phone numbers verified in the Twilio Console (Phone Numbers → Verified Caller IDs) can actually receive the SMS. `OtpRequestLog` throttles sends (60s cooldown, 5/hour per phone) mainly to cap accidental cost, not as a full abuse defense.
+9. **Cart merge on login has one unhandled edge case**: if the browser's cart cookie already belongs to a *different* customer (shared/kiosk device), `associateCartWithCustomer` deliberately skips merging rather than risk mixing two customers' carts — that guest cart is left as-is, unmerged.
+10. **E2E doesn't exercise the real OTP send/verify round-trip** — hitting live Twilio from automated tests would cost money and need a real phone to read the code. Specs needing a logged-in customer should seed the session directly rather than driving the phone/code UI; the OTP mechanics themselves were verified manually with a real phone.
 
 ## Dev gotchas
 - **Restart `next dev` after any `prisma migrate dev`.** A running dev server keeps the old generated client; new columns silently read as `undefined` (e.g. every login failed after adding `role`/`isActive`).
