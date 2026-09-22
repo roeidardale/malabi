@@ -14,6 +14,9 @@ const nextConfig: NextConfig = {
       // Turbopack routed unreliably. Keep old links and bookmarks working.
       // The source must be percent-encoded: a literal Hebrew source never matches.
       { source: "/%D7%A1%D7%9C-%D7%A7%D7%A0%D7%99%D7%95%D7%AA", destination: "/cart", permanent: true },
+      // Customer accounts switched from email/password to phone+OTP; the
+      // separate /register step went away, /login now handles both.
+      { source: "/register", destination: "/login", permanent: true },
     ];
   },
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { updateCustomerProfile } from "@/server/actions/auth";
+import { updateCustomerProfile } from "@/server/actions/customer-auth";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 
@@ -19,8 +19,8 @@ export function ProfileForm({ customer }: ProfileFormProps) {
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div>
-        <Label htmlFor="email">אימייל</Label>
-        <Input id="email" type="email" defaultValue={customer.email} disabled readOnly />
+        <Label htmlFor="phone">טלפון</Label>
+        <Input id="phone" type="tel" defaultValue={customer.phone} disabled readOnly />
       </div>
       <div>
         <Label htmlFor="name">שם מלא</Label>
@@ -34,25 +34,13 @@ export function ProfileForm({ customer }: ProfileFormProps) {
         />
       </div>
       <div>
-        <Label htmlFor="phone">טלפון</Label>
+        <Label htmlFor="email">אימייל (לא חובה)</Label>
         <Input
-          id="phone"
-          name="phone"
-          type="tel"
-          autoComplete="tel"
-          defaultValue={customer.phone}
-          required
-        />
-      </div>
-      <div>
-        <Label htmlFor="newPassword">סיסמה חדשה</Label>
-        <Input
-          id="newPassword"
-          name="newPassword"
-          type="password"
-          autoComplete="new-password"
-          placeholder="השאירו ריק אם אינכם רוצים לשנות"
-          minLength={8}
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          defaultValue={customer.email}
         />
       </div>
 

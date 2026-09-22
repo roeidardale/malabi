@@ -1,7 +1,13 @@
 import Link from "next/link";
-import { LoginForm } from "@/components/auth/LoginForm";
+import { PhoneLoginFlow } from "@/components/auth/PhoneLoginFlow";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirectTo?: string }>;
+}) {
+  const { redirectTo } = await searchParams;
+
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6">
@@ -9,7 +15,7 @@ export default function LoginPage() {
           → בית
         </Link>
         <h1 className="mb-6 text-display-md">התחברות</h1>
-        <LoginForm />
+        <PhoneLoginFlow redirectTo={redirectTo} />
       </div>
     </main>
   );

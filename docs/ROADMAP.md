@@ -16,13 +16,13 @@ Work top to bottom. `[ ]` open, `[x]` done. Items tagged **(client)** need input
 ## Phase 2 — Business rules
 - [ ] Delivery fee: replace hardcoded `DELIVERY_FEE_AGOROT = 0` in `src/lib/money.ts` (flat fee vs zones) **(client)**
 - [ ] Business hours (~09:30–24:00): setting + checkout check + display on site **(client)**
-- [ ] Cart merge on login (currently last-guest-cart-wins)
+- [x] Cart merge on login — `associateCartWithCustomer` in `src/lib/cart.ts` now merges a prior cart (from another device/session) into the current one instead of orphaning it
 
 ## Phase 3 — Customer phone login + addresses
-- [ ] Choose SMS vendor **(client)**
-- [ ] Pluggable SMS provider (mirror `src/lib/payment/`)
-- [ ] Phone + OTP login replacing email/password
-- [ ] `Address` model + saved-address book, used in checkout
+- [x] Choose SMS vendor **(client)** — Twilio Verify, live account configured
+- [x] Pluggable SMS provider (`src/lib/sms/`, mirrors `src/lib/payment/`'s shape)
+- [x] Phone + OTP login replacing email/password (`src/server/actions/customer-auth.ts`); name/email asked once via `/onboarding`
+- [x] `Address` model + saved-address book (`/addresses`), used in checkout (default prefill + per-order override + reorder from `/sales-history`)
 
 ## Phase 4 — Real payments
 - [ ] Get Tranzila sandbox terminal, set `TRANZILA_TERMINAL` **(client)**
@@ -32,7 +32,7 @@ Work top to bottom. `[ ]` open, `[x]` done. Items tagged **(client)** need input
 - [ ] Callback: verify authenticity + idempotency (no double-marking PAID)
 
 ## Phase 5 — Hardening (pre-launch)
-- [ ] Rate limiting on `registerCustomer` / `loginCustomer` / `loginAdmin` (and OTP once added)
+- [ ] Rate limiting on `loginAdmin` and `requestOtp`/`verifyOtp` — OTP sends already have a phone-scoped cooldown + hourly cap (`OtpRequestLog`); still no IP-based/global throttling anywhere
 - [ ] Input validation + upload restrictions (type/size) audit; server-action authz audit
 - [ ] Sanitize `StaticPage.bodyHtml` if editors become less trusted
 - [x] Playwright e2e: guest checkout, cart pricing, admin news CRUD (`npm run e2e`)

@@ -26,13 +26,43 @@ model AdminUser {
 
 model Customer {
   id           String        @id @default(cuid())
-  email        String        @unique
-  passwordHash String
-  name         String
-  phone        String
+  phone        String        @unique
+  name         String?
+  email        String?
   createdAt    DateTime      @default(now())
   orders       Order[]
   cartSessions CartSession[]
+  addresses    Address[]
+}
+
+/**
+ * Tracks OTP *send* attempts only, for local cost-control rate limiting
+ * (cooldown + hourly cap). The actual verification code, its expiry, and its
+ * wrong-attempt lockout all live on Twilio's side (Verify API) -- this app
+ * never generates, stores, or hashes a code.
+ */
+model OtpRequestLog {
+  id        String   @id @default(cuid())
+  phone     String
+  createdAt DateTime @default(now())
+
+  @@index([phone, createdAt])
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  label      String
+  street     String
+  city       String   @default("אשקלון")
+  notes      String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  orders     Order[]
+
+  @@index([customerId])
 }
 
 model Category {
@@ -145,12 +175,15 @@ model Order {
   paymentStatus        String      @default("PENDING")
   assignedDriverId     String?
   assignedDriver       AdminUser?  @relation("AssignedDriver", fields: [assignedDriverId], references: [id])
+  addressId            String?
+  address              Address?    @relation(fields: [addressId], references: [id], onDelete: SetNull)
   items                OrderItem[]
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
   @@index([customerId])
   @@index([assignedDriverId])
+  @@index([addressId])
 }
 
 model OrderItem {
