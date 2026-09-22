@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateCartSession } from "@/lib/cart";
+import { requireCustomer } from "./customer-guard";
 
 function readString(formData: FormData, key: string): string | null {
   const value = formData.get(key);
@@ -93,4 +94,56 @@ export async function removeCartItem(formData: FormData) {
   });
 
   revalidatePath("/", "layout");
+}
+
+export type ReorderResult =
+  | { ok: true; addedCount: number; unavailableCount: number }
+  | { ok: false; error: string };
+
+/** Re-adds a past order's items to the current cart, same upsert-with-increment shape as addToCart. */
+export async function reorderFromOrder(orderId: string): Promise<ReorderResult> {
+  const customer = await requireCustomer();
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId, customerId: customer.id },
+    include: { items: { include: { productVariant: { include: { product: true } } } } },
+  });
+  if (!order) {
+    return { ok: false, error: "ההזמנה לא נמצאה" };
+  }
+
+  const session = await getOrCreateCartSession();
+  let addedCount = 0;
+  let unavailableCount = 0;
+
+  for (const item of order.items) {
+    const variant = item.productVariant;
+    if (!variant || !variant.isActive || !variant.product.isActive || variant.priceAgorot <= 0) {
+      unavailableCount += 1;
+      continue;
+    }
+
+    await prisma.cartItem.upsert({
+      where: {
+        cartSessionId_productVariantId: {
+          cartSessionId: session.id,
+          productVariantId: variant.id,
+        },
+      },
+      update: {
+        quantity: { increment: item.quantity },
+        unitPriceAgorot: variant.priceAgorot,
+      },
+      create: {
+        cartSessionId: session.id,
+        productVariantId: variant.id,
+        quantity: item.quantity,
+        unitPriceAgorot: variant.priceAgorot,
+      },
+    });
+    addedCount += 1;
+  }
+
+  revalidatePath("/", "layout");
+  return { ok: true, addedCount, unavailableCount };
 }

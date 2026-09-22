@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import type { OrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getCustomerSession } from "@/lib/session";
 import { formatIls } from "@/lib/money";
+import { requireCustomer } from "@/server/actions/customer-guard";
+import { ReorderButton } from "@/components/orders/ReorderButton";
 
 const statusLabels: Record<OrderStatus, string> = {
   PENDING_PAYMENT: "ממתין לתשלום",
@@ -15,13 +15,10 @@ const statusLabels: Record<OrderStatus, string> = {
 };
 
 export default async function SalesHistoryPage() {
-  const session = await getCustomerSession();
-  if (!session.customerId) {
-    redirect("/login");
-  }
+  const customer = await requireCustomer();
 
   const orders = await prisma.order.findMany({
-    where: { customerId: session.customerId },
+    where: { customerId: customer.id },
     include: { items: true },
     orderBy: { createdAt: "desc" },
   });
@@ -51,6 +48,9 @@ export default async function SalesHistoryPage() {
               <div className="mt-1 flex items-center justify-between">
                 <span className="text-sm text-accent">{statusLabels[order.status]}</span>
                 <span className="font-medium">{formatIls(order.totalAgorot)}</span>
+              </div>
+              <div className="mt-2 flex justify-end">
+                <ReorderButton orderId={order.id} />
               </div>
               <ul className="mt-3 flex flex-col gap-1 border-t border-border pt-3 text-sm text-muted-foreground">
                 {order.items.map((item) => (

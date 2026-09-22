@@ -60,17 +60,73 @@ export async function getOrCreateCartSession() {
 
 /**
  * Links the current guest cart session (identified by the cart cookie) to a
- * newly authenticated customer, so items added before login/registration
- * survive into their account. Call this right after setting the customer
- * session cookie in a Server Action (register/login).
+ * newly authenticated customer, so items added before login survive into
+ * their account -- and merges it with any cart the customer already has from
+ * a prior login elsewhere, instead of orphaning one side. Call this right
+ * after setting the customer session cookie in a Server Action (login).
  */
 export async function associateCartWithCustomer(customerId: string) {
-  const session = await findCartSession();
-  if (!session || session.customerId === customerId) return;
+  const current = await findCartSession();
+  const priorSessions = await prisma.cartSession.findMany({
+    where: { customerId, ...(current ? { id: { not: current.id } } : {}) },
+    include: cartInclude,
+  });
 
-  await prisma.cartSession.update({
-    where: { id: session.id },
-    data: { customerId },
+  if (!current) {
+    // No guest cart on this device/browser -- if the customer already has a
+    // cart from elsewhere, surface it here by adopting its cookie.
+    const [prior] = priorSessions;
+    if (prior) {
+      const cookieStore = await cookies();
+      cookieStore.set(CART_COOKIE_NAME, prior.token, {
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: CART_COOKIE_MAX_AGE,
+        path: "/",
+      });
+    }
+    return;
+  }
+
+  if (current.customerId && current.customerId !== customerId) {
+    // Shared-device edge case: this cookie's cart already belongs to a
+    // different customer. Don't risk mixing carts -- leave it alone.
+    return;
+  }
+
+  await prisma.$transaction(async (tx) => {
+    // Tracks merged quantities as we go (not just current.items' initial
+    // snapshot), so two prior sessions sharing a variant merge correctly
+    // instead of racing to create() the same (cartSessionId, variant) row.
+    const merged = new Map(current.items.map((i) => [i.productVariantId, { id: i.id, quantity: i.quantity }]));
+
+    for (const prior of priorSessions) {
+      for (const item of prior.items) {
+        const existing = merged.get(item.productVariantId);
+        if (existing) {
+          const updated = await tx.cartItem.update({
+            where: { id: existing.id },
+            data: { quantity: existing.quantity + item.quantity },
+          });
+          merged.set(item.productVariantId, { id: updated.id, quantity: updated.quantity });
+        } else {
+          const created = await tx.cartItem.create({
+            data: {
+              cartSessionId: current.id,
+              productVariantId: item.productVariantId,
+              quantity: item.quantity,
+              unitPriceAgorot: item.unitPriceAgorot,
+            },
+          });
+          merged.set(item.productVariantId, { id: created.id, quantity: created.quantity });
+        }
+      }
+      await tx.cartSession.delete({ where: { id: prior.id } });
+    }
+
+    if (current.customerId !== customerId) {
+      await tx.cartSession.update({ where: { id: current.id }, data: { customerId } });
+    }
   });
 }
 
