@@ -14,3 +14,4 @@ export function e2eDatabaseUrl(): string {
 }
 
 export const ADMIN = { email: "e2e-admin@malabi.test", password: "e2e-password-123" };
+export const CUSTOMER = { phone: "+972500000001" };

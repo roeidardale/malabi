@@ -6,7 +6,7 @@ import { readdirSync } from "node:fs";
 import path from "node:path";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
-import { ADMIN, E2E_DB_NAME } from "./env";
+import { ADMIN, CUSTOMER, E2E_DB_NAME } from "./env";
 
 async function ensureDatabase() {
   const maintenance = new PrismaClient({ datasourceUrl: process.env.E2E_MAINTENANCE_URL });
@@ -46,7 +46,8 @@ async function seed(prisma: PrismaClient) {
   await prisma.category.deleteMany();
   await prisma.post.deleteMany();
   await prisma.staticPage.deleteMany();
-  await prisma.customer.deleteMany();
+  await prisma.otpRequestLog.deleteMany();
+  await prisma.customer.deleteMany(); // cascades to Address
   await prisma.adminUser.deleteMany();
 
   const photo = firstCategoryPhoto();
@@ -155,6 +156,10 @@ async function seed(prisma: PrismaClient) {
       role: "OWNER",
       passwordHash: await bcrypt.hash(ADMIN.password, 10),
     },
+  });
+
+  await prisma.customer.create({
+    data: { phone: CUSTOMER.phone, name: "E2E Customer" },
   });
 }
 

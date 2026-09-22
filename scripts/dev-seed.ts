@@ -78,6 +78,27 @@ async function main() {
     },
   });
 
+  // A ready-to-use logged-in-able customer (created directly, bypassing OTP)
+  // so the address-book/checkout UI has data without a real Twilio round-trip.
+  const devCustomer = await prisma.customer.upsert({
+    where: { phone: "+972500000000" },
+    update: {},
+    create: { phone: "+972500000000", name: "לקוח לדוגמה", email: "dev-customer@malabi.test" },
+  });
+
+  await prisma.address.upsert({
+    where: { id: "dev-address-home" },
+    update: {},
+    create: {
+      id: "dev-address-home",
+      customerId: devCustomer.id,
+      label: "בית",
+      street: "הרצל 1",
+      city: "אשקלון",
+      isDefault: true,
+    },
+  });
+
   const staticPages: { slug: string; title: string; bodyHtml: string }[] = [
     { slug: "אודות", title: "אודות", bodyHtml: "<p>מלבי אקספרס - משלוחי אלכוהול באשקלון והסביבה.</p>" },
     { slug: "צור-קשר", title: "צור קשר", bodyHtml: "<p>טלפון: 052-3311457</p>" },
