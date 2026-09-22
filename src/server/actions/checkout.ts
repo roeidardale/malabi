@@ -9,19 +9,29 @@ import { getOrCreateCartSession, priceCartItems } from "@/lib/cart";
 import { getCustomerSession } from "@/lib/session";
 import { MIN_ORDER_AGOROT, DELIVERY_FEE_AGOROT, DEFAULT_DELIVERY_CITY } from "@/lib/money";
 import { getActivePaymentProvider } from "@/lib/payment";
+import { upsertCustomerAddress } from "@/lib/addresses";
 
 export interface CheckoutActionState {
   error?: string;
 }
 
-const checkoutSchema = z.object({
-  customerName: z.string().trim().min(1, "יש להזין שם מלא"),
-  customerPhone: z.string().trim().min(1, "יש להזין מספר טלפון"),
-  customerEmail: z.email("כתובת אימייל לא תקינה").optional().or(z.literal("")),
-  deliveryStreet: z.string().trim().min(1, "יש להזין כתובת למשלוח"),
-  deliveryCity: z.string().trim().min(1, "יש להזין עיר"),
-  deliveryNotes: z.string().trim().optional().or(z.literal("")),
-});
+const checkoutSchema = z
+  .object({
+    customerName: z.string().trim().min(1, "יש להזין שם מלא"),
+    customerPhone: z.string().trim().min(1, "יש להזין מספר טלפון"),
+    customerEmail: z.email("כתובת אימייל לא תקינה").optional().or(z.literal("")),
+    // Either a saved address is selected, or free-text street/city are filled in.
+    selectedAddressId: z.string().trim().optional().or(z.literal("")),
+    deliveryStreet: z.string().trim().optional().or(z.literal("")),
+    deliveryCity: z.string().trim().optional().or(z.literal("")),
+    deliveryNotes: z.string().trim().optional().or(z.literal("")),
+    saveAsNewAddress: z.string().optional(),
+    newAddressLabel: z.string().trim().optional().or(z.literal("")),
+  })
+  .refine((data) => Boolean(data.selectedAddressId) || Boolean(data.deliveryStreet), {
+    message: "יש להזין כתובת למשלוח",
+    path: ["deliveryStreet"],
+  });
 
 async function nextOrderNumber(tx: Prisma.TransactionClient) {
   const last = await tx.order.findFirst({ orderBy: { orderNumber: "desc" } });
@@ -36,9 +46,12 @@ export async function createOrderFromCart(
     customerName: formData.get("customerName"),
     customerPhone: formData.get("customerPhone"),
     customerEmail: formData.get("customerEmail") ?? "",
-    deliveryStreet: formData.get("deliveryStreet"),
+    selectedAddressId: formData.get("selectedAddressId") ?? "",
+    deliveryStreet: formData.get("deliveryStreet") ?? "",
     deliveryCity: formData.get("deliveryCity") || DEFAULT_DELIVERY_CITY,
     deliveryNotes: formData.get("deliveryNotes") ?? "",
+    saveAsNewAddress: formData.get("saveAsNewAddress") ?? undefined,
+    newAddressLabel: formData.get("newAddressLabel") ?? "",
   });
 
   if (!parsed.success) {
@@ -62,6 +75,32 @@ export async function createOrderFromCart(
   const customerSession = await getCustomerSession();
   const data = parsed.data;
 
+  let deliveryStreet = data.deliveryStreet || "";
+  let deliveryCity = data.deliveryCity || DEFAULT_DELIVERY_CITY;
+  let addressId: string | null = null;
+
+  if (data.selectedAddressId) {
+    if (!customerSession.customerId) {
+      return { error: "יש להתחבר כדי להשתמש בכתובת שמורה" };
+    }
+    const address = await prisma.address.findUnique({
+      where: { id: data.selectedAddressId, customerId: customerSession.customerId },
+    });
+    if (!address) {
+      return { error: "הכתובת שנבחרה לא נמצאה" };
+    }
+    deliveryStreet = address.street;
+    deliveryCity = address.city;
+    addressId = address.id;
+  } else if (data.saveAsNewAddress === "on" && customerSession.customerId) {
+    const created = await upsertCustomerAddress(customerSession.customerId, {
+      label: data.newAddressLabel || "כתובת שמורה",
+      street: deliveryStreet,
+      city: deliveryCity,
+    });
+    addressId = created.id;
+  }
+
   const order = await prisma.$transaction(async (tx) => {
     const orderNumber = await nextOrderNumber(tx);
     const totalAgorot = subtotalAgorot + DELIVERY_FEE_AGOROT;
@@ -73,9 +112,10 @@ export async function createOrderFromCart(
         customerName: data.customerName,
         customerPhone: data.customerPhone,
         customerEmail: data.customerEmail || null,
-        deliveryStreet: data.deliveryStreet,
-        deliveryCity: data.deliveryCity,
+        deliveryStreet,
+        deliveryCity,
         deliveryNotes: data.deliveryNotes || null,
+        addressId,
         subtotalAgorot,
         deliveryFeeAgorot: DELIVERY_FEE_AGOROT,
         totalAgorot,

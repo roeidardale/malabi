@@ -2,15 +2,29 @@ import { redirect } from "next/navigation";
 import { getCartSummary } from "@/lib/cart";
 import { CART_PATH } from "@/lib/routes";
 import { formatIls } from "@/lib/money";
+import { prisma } from "@/lib/prisma";
+import { getCustomerSession } from "@/lib/session";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { Card } from "@/components/ui/card";
 
 export default async function CheckoutPage() {
-  const { items, unavailableItems, subtotalAgorot, meetsMinimum } = await getCartSummary();
+  const [{ items, unavailableItems, subtotalAgorot, meetsMinimum }, customerSession] = await Promise.all([
+    getCartSummary(),
+    getCustomerSession(),
+  ]);
 
   if (items.length === 0 || unavailableItems.length > 0 || !meetsMinimum) {
     redirect(CART_PATH);
   }
+
+  // Guest checkout stays fully supported: `customer` is null unless logged in,
+  // and CheckoutForm renders the plain guest form in that case.
+  const customer = customerSession.customerId
+    ? await prisma.customer.findUnique({
+        where: { id: customerSession.customerId },
+        include: { addresses: { orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }] } },
+      })
+    : null;
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-8">
@@ -34,7 +48,7 @@ export default async function CheckoutPage() {
         </div>
       </Card>
 
-      <CheckoutForm />
+      <CheckoutForm customer={customer} />
     </div>
   );
 }
