@@ -3,14 +3,15 @@
 Work top to bottom. `[ ]` open, `[x]` done. Items tagged **(client)** need input from the business owner.
 
 ## Phase 0 — Local setup sanity
-- [ ] Create first owner: `npm run create-admin`
+- [x] Create first owner: `npm run create-admin`
 - [x] Re-scrape or hand-add empty categories: `אלכוהול/וודקה`, `וויסקי`, `ליקרים`
 - [x] Decide category alias ownership (some branches show 0 direct products — see [KNOWN-ISSUES](KNOWN-ISSUES.md))
 
 ## Phase 1 — Real catalog data  *(blocks any real use)*
-- [ ] Get price export **(client)** — sent as `malabi-price-report-for-client.xlsx` for confirmation; awaiting reply
-- [x] Write `scripts/import-prices.ts` — matches CSV rows to the catalog by category/product/variant name (the price report has no `sourceProductKey`/`sourceOptionValue`); defaults to a dry run, `--apply` to write. **Not run yet** — waiting on the client's confirmed prices back; fallback: type prices via `/admin/products/[id]`
-- [ ] Replace dev placeholder prices (dashboard "מחירי דמו להחלפה" must reach 0; `npm run dev-prices` is DEV ONLY)
+- [x] Get price export **(client)** — `malabi-price-report-final.csv`
+- [x] Write `scripts/import-prices.ts` — matches CSV rows to the catalog by category/product/variant name (the price report has no `sourceProductKey`/`sourceOptionValue`); defaults to a dry run, `--apply` to write. It now also **creates** the variant when a matched product has none yet, instead of only updating an existing one's price.
+- [x] Ran `--apply` against `malabi-price-report-final.csv` (2026-09-23): 115 variants created for products that had none, 82 existing ₪0 variants given real prices, 197 total. See GitHub #3.
+- [ ] Replace remaining unpriced/no-variant products — 288 products still have zero variants because the scraper never picked them up at all (whole missing categories/products, GitHub #4), not something a price import can fix; needs a re-scrape or manual entry
 - [ ] Verify dashboard "variants missing a price" reaches 0
 
 ## Phase 2 — Business rules

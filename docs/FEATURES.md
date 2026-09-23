@@ -1,9 +1,9 @@
 # What's built
 
 ## Catalog & content
-- Scraper (`npm run scrape`, respects robots.txt) populated **57 categories, 536 products, 513 product photos** (`public/media/products/`). Single-item products get one default "יחידה" variant (`npm run backfill-variants` for existing data).
+- Scraper (`npm run scrape`, respects robots.txt) populated **57 categories, 429 products**. Single-item products get one default "יחידה" variant (`npm run backfill-variants` for existing data); the storefront hides the variant picker for any product left with just one variant, whatever it's named.
 - Category photos come from the live site's nav tiles (`npm run category-images`), falling back to a product photo, then the parent's. `npm run check-media` audits that every `imageUrl` exists on disk.
-- **Prices are dev placeholders** (`priceSource = PLACEHOLDER`, `npm run dev-prices`); the live site doesn't publish prices. The admin dashboard counts placeholders left to replace.
+- **Real prices**: `scripts/import-prices.ts` applies a client-confirmed price report (`category,product_name,variant,price_ils,status` CSV) onto the catalog — matched by category + product + variant name, dry-run by default, `--apply` to write. It creates the variant when a matched product has none yet (that's what made ~400 products unbuyable), and only touches an existing variant's price when its name matches; anything it can't match unambiguously is listed, never guessed. `npm run dev-prices` remains a dev-only filler for whatever's still unpriced after that. The admin dashboard counts placeholders left to replace.
 - Static pages (`/about`, `/contact`, `/terms`) live in `StaticPage`, seeded by `npm run seed-content` (wording needs owner/legal review).
 
 ## Storefront
@@ -26,7 +26,7 @@
 ## Admin panel (`/admin`)
 - Login; dashboard (counts + "variants missing price") — owner only
 - Categories CRUD with cascading `fullSlugPath` on rename/move
-- Products + variants CRUD, image upload (JPG/PNG/WebP/GIF, ≤5MB; shared validator `src/server/media.ts`)
+- Products + variants CRUD, image upload (JPG/PNG/WebP/GIF, ≤5MB; shared validator `src/server/media.ts`). A product's first variant offers a "single option" checkbox instead of requiring a made-up variant name — checked, it submits the "יחידה" sentinel the storefront treats as no-picker-needed
 - **News & updates** (`/admin/news`, owner): posts with title, body, image, publish date, pinned/published — shown on the landing page
 - Orders list/detail with role-aware status updates
 - **Dispatch** (`/admin/dispatch`): open orders with payment badges, assign/unassign driver
