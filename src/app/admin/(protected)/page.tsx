@@ -14,6 +14,7 @@ export default async function AdminDashboardPage() {
     categoryCount,
     productCount,
     orderCount,
+    noVariantCount,
     missingPriceCount,
     placeholderPriceCount,
     recentOrders,
@@ -21,6 +22,7 @@ export default async function AdminDashboardPage() {
     prisma.category.count(),
     prisma.product.count(),
     prisma.order.count(),
+    prisma.product.count({ where: { variants: { none: {} } } }),
     prisma.productVariant.count({ where: { priceAgorot: 0 } }),
     prisma.productVariant.count({ where: { priceSource: "PLACEHOLDER" } }),
     prisma.order.findMany({
@@ -33,6 +35,11 @@ export default async function AdminDashboardPage() {
     { label: "קטגוריות", value: categoryCount, href: "/admin/categories" },
     { label: "מוצרים", value: productCount, href: "/admin/products" },
     { label: "הזמנות", value: orderCount, href: "/admin/orders" },
+    {
+      label: "מוצרים ללא וריאנט",
+      value: noVariantCount,
+      href: "/admin/products",
+    },
     {
       label: "וריאנטים ללא מחיר",
       value: missingPriceCount,
@@ -49,7 +56,7 @@ export default async function AdminDashboardPage() {
     <div>
       <h1 className="mb-6 text-display-md">לוח בקרה</h1>
 
-      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         {stats.map((stat) => (
           <Link key={stat.label} href={stat.href}>
             <Card interactive>
