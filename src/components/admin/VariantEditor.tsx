@@ -5,6 +5,7 @@ import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components
 import { agorotToShekelString } from "@/lib/money";
 import { upsertVariant, deleteVariant } from "@/server/actions/admin-products";
 import { DeleteButton } from "@/components/admin/DeleteButton";
+import { VariantNameField } from "@/components/admin/VariantNameField";
 
 export function VariantEditor({
   productId,
@@ -36,7 +37,11 @@ export function VariantEditor({
           </TableRow>
         ))}
         <TableRow>
-          <VariantRowFields action={upsertVariant.bind(null, productId, null)} isNew />
+          <VariantRowFields
+            action={upsertVariant.bind(null, productId, null)}
+            isNew
+            isFirstVariant={variants.length === 0}
+          />
         </TableRow>
       </TableBody>
     </Table>
@@ -48,23 +53,29 @@ function VariantRowFields({
   variant,
   deleteAction,
   isNew = false,
+  isFirstVariant = false,
 }: {
   action: (formData: FormData) => void | Promise<void>;
   variant?: ProductVariant;
   deleteAction?: (formData: FormData) => void | Promise<void>;
   isNew?: boolean;
+  isFirstVariant?: boolean;
 }) {
   const formId = variant ? `variant-${variant.id}` : "variant-new";
   return (
     <TableCell colSpan={6}>
       <form id={formId} action={action} className="flex flex-wrap items-center gap-2">
-        <Input
-          name="name"
-          placeholder="שם וריאנט"
-          defaultValue={variant?.name}
-          required
-          className="w-40"
-        />
+        {isNew && isFirstVariant ? (
+          <VariantNameField />
+        ) : (
+          <Input
+            name="name"
+            placeholder="שם וריאנט"
+            defaultValue={variant?.name}
+            required
+            className="w-40"
+          />
+        )}
         <Input
           name="price"
           type="number"
@@ -85,7 +96,7 @@ function VariantRowFields({
           <input
             type="checkbox"
             name="isDefault"
-            defaultChecked={variant?.isDefault ?? false}
+            defaultChecked={variant?.isDefault ?? isFirstVariant}
             className="h-4 w-4"
           />
           ברירת מחדל

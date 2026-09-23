@@ -45,7 +45,10 @@ export function AddToCart({
   }
 
   const priced = selected.priceAgorot > 0;
-  const showOptions = variants.length > 1 || selected.name !== DEFAULT_VARIANT_NAME;
+  // A single variant has nothing to choose between; show its name only if it
+  // carries real info (a size, say) rather than the generic placeholder.
+  const showOptions = variants.length > 1;
+  const showSingleVariantLabel = variants.length === 1 && selected.name !== DEFAULT_VARIANT_NAME;
 
   function handleAdd() {
     if (!selected) return;
@@ -101,6 +104,8 @@ export function AddToCart({
             );
           })}
         </div>
+      ) : showSingleVariantLabel ? (
+        <p className="text-sm text-muted-foreground">{selected.name}</p>
       ) : null}
 
       <div className="flex items-center justify-between gap-2">
